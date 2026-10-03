@@ -15,3 +15,11 @@
 - Moved private repo names (Lab, insight-private) out of the public config into gitignored `projects.private.json`; the activity script merges it. ADR 0001 reworded to not name them. Counts unchanged.
 - First commit pushed to main; GitHub Pages enabled (build from Actions). Live at https://markussteinbrecher.github.io/steinclankers/ and verified in a browser.
 - Open: real-phone performance check; custom domain; scheduled refresh of commit data (it is collected locally, so it only updates when `npm run activity` is run and pushed); decide whether the 3D wordmark on the HQ may stay (logo rule on shadows).
+
+## 2026-10-03 (later): unique buildings (ADR 0004)
+- Insight removed from the site (config, private repo list, noscript text, sign colours); commit data regenerated.
+- Each project now has its own building (`src/scene/city/buildings.js`), sized by lifetime commits: rrradio is a radio station with a lattice mast, beacon and radio waves; Archipelago glass terraces; meinHERMES an academy with columns and a clock tower; meineSteuer a bank with a Swiss flag; rrrecipe a brick bistro; SteinerDesign a gridded studio; claude-mods a workshop with a plug on the roof; squash a mill with a funnel; the Lab a shuttered warehouse.
+- Signs show the real logos for rrradio (dot-matrix rrr), meinHERMES and meineSteuer; the other projects have none and keep their glyph.
+- Checked in the browser, light and dark, no console errors. Not committed or deployed yet.
+- Open: the design-system repo has only 4 local commits, so SteinerDesign gets one of the smallest buildings; real-phone performance check still pending.
+- Added the Clanker Café in the HQ plaza (kiosk with a Ko-fi-blue awning, a giant cup on the roof and a terrace). Clicking it opens the panel with a "Buy rrradio a coffee" button to https://ko-fi.com/rrradio (the link rrradio.org uses); the list view has the same link. Config lives under `cafe` in projects.config.json.

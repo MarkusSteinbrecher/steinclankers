@@ -13,16 +13,16 @@ import { Trees, Landscape } from './city/scenery.js';
 import { Traffic, Crowd } from './city/life.js';
 import { Sky, Effects } from './city/sky.js';
 import { signMesh, wordmarkCells } from './city/signs.js';
+import { building, cafe, Parts, FH } from './city/buildings.js';
 
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const backOut = (t) => 1 + 2.2 * Math.pow(t - 1, 3) + 1.2 * Math.pow(t - 1, 2);
 const PAN_LIMIT = 70;
 const SUN = new THREE.Vector3(14, 60, 40);
-const FH = 0.9; // floor height
 
 // Clanker City: a small city with a street grid, ringed by grass, mountains and a lake.
-// Every project is a glass office with its logo on the facade and its real commit graph
-// as contribution-graph cells in the plaza in front.
+// Every project has a building of its own (size from its lifetime commits) with its logo on
+// the roof and the facade, and its real commit graph as contribution-graph cells in the plaza.
 export class City {
   constructor({ container, data, theme, reducedMotion, onSelect, onDeliver }) {
     this.container = container;
@@ -108,15 +108,19 @@ export class City {
     this.city = new THREE.Group();
     this.scene.add(this.city);
 
+    this.trees = new Trees();
+    this.stationChimneys = [];
     this.#buildHQ();
     const entries = [...d.projects.map((p) => ({ ...p, kind: 'project' })), { ...d.lab, id: 'lab', status: 'active', glyph: 'flask', kind: 'lab' }];
-    entries.forEach((e, n) => this.#buildStation(e, STATION_BLOCKS[n]));
+    const maxTotal = Math.max(...entries.map((e) => e.total || 0));
+    entries.forEach((e, n) => this.#buildStation(e, STATION_BLOCKS[n], maxTotal));
+    if (d.cafe) this.#buildCafe(d.cafe);
 
     const boxGeo = new THREE.BoxGeometry(1, 1, 1);
     this.solid = new VoxelBatch(boxGeo, new THREE.MeshStandardMaterial({ roughness: 0.85 }));
     this.glow = new VoxelBatch(boxGeo, new THREE.MeshBasicMaterial());
-    this.trees = new Trees();
-    const anchors = furnish(this.ground, this.solid, this.glow, this.trees);
+    const anchors = furnish(this.ground, this.solid, this.glow, this.trees, STATION_BLOCKS.slice(0, entries.length));
+    anchors.chimneys.push(...this.stationChimneys);
     this.landscape = new Landscape(this.scene, this.pal, this.trees, this.still);
     const solidMesh = this.solid.build(this.pal);
     solidMesh.castShadow = solidMesh.receiveShadow = true;
@@ -176,12 +180,12 @@ export class City {
     return LOT + floors * FH + 0.08;
   }
 
-  #frame(group, w, d) {
+  #frame(group, w, d, z0 = 0) {
     this.frameMat ||= new THREE.MeshBasicMaterial({ color: this.pal.accent });
     const frame = new THREE.Group();
     const bar = (bw, bd, x, z) => {
       const b = new THREE.Mesh(new THREE.BoxGeometry(bw, 0.06, bd), this.frameMat);
-      b.position.set(x, LOT + 0.04, z);
+      b.position.set(x, LOT + 0.04, z + z0);
       frame.add(b);
     };
     const hw = w / 2 + 0.5, hd = d / 2 + 0.5;
@@ -251,11 +255,13 @@ export class City {
     this.stations.push(hq);
   }
 
-  #buildStation(e, [bx, bz]) {
+  #buildStation(e, [bx, bz], maxTotal) {
     const cx = bx * P, cz = bz * P;
-    const floors = Math.max(3, Math.min(10, 3 + Math.round(Math.log10((e.total || 0) + 1) * 2)));
-    const w = 11, d = 4.5;
-    const st = { ...e, cx, cz, bxC: cx - 0.5, bzC: cz - 4.75, floors, side: bx < 0 ? 1 : bx > 0 ? -1 : 1, robots: [], pulse: -1 };
+    // Size from lifetime commits, on a log scale: small side projects are low and narrow,
+    // the biggest project gets the widest, tallest building.
+    const t = Math.log10((e.total || 0) + 1) / Math.log10(maxTotal + 1);
+    const w = Math.round(7 + t * 5), d = t > 0.6 ? 5 : 4, floors = Math.max(2, Math.round(2 + t * 9));
+    const st = { ...e, cx, cz, bxC: cx - 0.5, bzC: cz - 4.75, w, d, floors, side: bx < 0 ? 1 : bx > 0 ? -1 : 1, robots: [], pulse: -1 };
     this.ground.setSurface(bx, bz, 'paving');
     const group = (st.group = new THREE.Group());
     group.position.set(st.bxC, 0, st.bzC);
@@ -274,31 +280,68 @@ export class City {
     let seed = st.id.length * 97 + 13;
     const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
     [st.solid, st.glowB] = this.#batches();
-    const roof = this.#office(st.solid, st.glowB, w, d, floors, st.status === 'active' ? 0.55 : 0.03, rnd);
-    st.solid.add(0, roof, 0, w - 0.2, 0.2, d - 0.2, 'roof');
-    st.solid.add(2.5, roof + 0.2, -0.6, 1.6, 0.6, 1.2, 'concreteDark');
-    st.solid.add(-3, roof + 0.2, -1.2, 1.0, 0.45, 1.0, 'concreteDark');
-    // Logo: a big billboard on the roof (turned to the camera) and a sign on the side facade.
+    st.parts = new Parts(group);
+    st.anim = [];
     const paused = st.status !== 'active';
-    const front = signMesh(st.id, st.name, st.glyph, paused, 2.2, w + 1);
+    const z0 = -2.25 + d / 2; // building centre: the back wall stays on the same line for every size
+    const res = building(st.id, {
+      solid: st.solid, glow: st.glowB, parts: st.parts, trees: this.trees, rnd, w, d, floors, z0, paused,
+      lit: paused ? 0.03 : 0.55, still: this.still, anim: st.anim, chimneys: paused ? [] : this.stationChimneys, wx: st.bxC, wz: st.bzC,
+    });
+
+    // Logo: a billboard on the roof (turned to the camera) and a sign on the side facade.
+    const bb = res.billboard;
+    const front = signMesh(st.id, st.name, st.glyph, paused, 1.5 + t * 0.9, bb.maxW);
     const fw = front.geometry.parameters.width, fhh = front.geometry.parameters.height;
-    front.position.set(0, roof + 0.7 + fhh / 2, 0.6);
+    front.position.set(bb.x, bb.y + 0.6 + fhh / 2, bb.z);
     front.rotation.y = Math.PI / 8;
-    for (const lx of [-fw * 0.3, fw * 0.3]) st.solid.add(lx * Math.cos(Math.PI / 8), roof + 0.2, 0.6 - lx * Math.sin(Math.PI / 8), 0.12, 0.6, 0.12, 'concreteDark');
-    const side = signMesh(st.id, st.name, st.glyph, paused, 1.3, d - 0.5);
-    side.position.set(w / 2 + 0.06, LOT + (floors - 0.6) * FH, 0);
+    for (const lx of [-fw * 0.3, fw * 0.3]) st.solid.add(bb.x + lx * Math.cos(Math.PI / 8), bb.y, bb.z - lx * Math.sin(Math.PI / 8), 0.12, 0.6, 0.12, 'concreteDark');
+    const sd = res.side;
+    const side = signMesh(st.id, st.name, st.glyph, paused, 1.0 + t * 0.4, sd.maxW);
+    side.position.set(sd.x, sd.y, sd.z);
     side.rotation.y = Math.PI / 2;
     group.add(front, side);
     st.signs = [front, side];
     const sm = st.solid.build(this.pal);
     sm.castShadow = sm.receiveShadow = true;
     group.add(sm, st.glowB.build(this.pal));
-    st.roofTop = roof;
+    st.parts.recolor(this.pal);
+    st.roofTop = res.roof;
 
-
-    st.frame = this.#frame(group, w, d);
+    st.frame = this.#frame(group, w, d, z0);
     group.traverse((o) => { o.userData.station = st; });
-    this.#label(st, 0, roof + 2, 0);
+    this.#label(st, 0, res.top, 0);
+    this.stations.push(st);
+  }
+
+  // The coffee place in the HQ plaza, next to the mark mosaic. Clicking it opens the panel
+  // with the Ko-fi link.
+  #buildCafe(c) {
+    const x = 4.9, z = 1.6;
+    const st = { ...c, id: 'cafe', kind: 'cafe', status: 'active', bxC: x, bzC: z, robots: [], pulse: -1, focus: new THREE.Vector3(x, 1, z + 1.5) };
+    const group = (st.group = new THREE.Group());
+    group.position.set(x, 0, z);
+    this.city.add(group);
+    let seed = 7;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    [st.solid, st.glowB] = this.#batches();
+    st.parts = new Parts(group);
+    const res = cafe({ solid: st.solid, glow: st.glowB, parts: st.parts, rnd });
+    const sign = signMesh('cafe', st.name, 'cup', false, 0.8, 4.2);
+    sign.position.set(0, res.roof + 1.5, -0.6);
+    sign.rotation.y = Math.PI / 8;
+    st.solid.add(-0.9, res.roof, -0.6, 0.08, 1.1, 0.08, 'metalDark');
+    st.solid.add(0.9, res.roof, -0.6, 0.08, 1.1, 0.08, 'metalDark');
+    group.add(sign);
+    st.signs = [sign];
+    const sm = st.solid.build(this.pal);
+    sm.castShadow = sm.receiveShadow = true;
+    group.add(sm, st.glowB.build(this.pal));
+    st.parts.recolor(this.pal);
+    st.roofTop = res.roof;
+    st.frame = this.#frame(group, 3, 6, 1.2);
+    group.traverse((o) => { o.userData.station = st; });
+    this.#label(st, 0, res.top, 0);
     this.stations.push(st);
   }
 
@@ -329,8 +372,8 @@ export class City {
     const ring = [];
     for (let v = -8; v <= 7; v++) ring.push([v, -8], [v, 7], [-8, v], [7, v]);
     for (const st of this.stations) {
-      if (st.kind === 'hq') continue;
-      const dropX = st.bxC + st.side * 6.1, dropZ = st.bzC;
+      if (st.kind === 'hq' || st.kind === 'cafe') continue;
+      const dropX = st.bxC + st.side * Math.min(st.w / 2 + 0.7, 6.6), dropZ = st.bzC;
       if (st.status !== 'active') {
         const r = new Robot(this.robotMats, { mode: 'sleep', station: st });
         r.park(st.bxC + st.side * 3, st.cz - 1.9, st.side > 0 ? 0.5 : -0.5);
@@ -459,8 +502,8 @@ export class City {
     for (const s of this.stations) if (s.frame) s.frame.visible = s === st || s === this.hovered;
     if (st) {
       st.labelEl.setAttribute('aria-pressed', 'true');
-      const target = st.kind === 'hq' ? new THREE.Vector3(-0.5, 2, -1) : new THREE.Vector3(st.bxC, st.floors * 0.4, st.cz - 1.5);
-      this.#flyTo(target, st.kind === 'hq' ? 1.8 : 1.9);
+      const target = st.focus || (st.kind === 'hq' ? new THREE.Vector3(-0.5, 2, -1) : new THREE.Vector3(st.bxC, st.floors * 0.4, st.cz - 1.5));
+      this.#flyTo(target, st.kind === 'cafe' ? 2.6 : st.kind === 'hq' ? 1.8 : 1.9);
       st.robots.forEach((r, i) => setTimeout(() => r.poke(), 300 + i * 160));
     }
     this.onSelect?.(st);
@@ -522,6 +565,7 @@ export class City {
     for (const st of this.stations) {
       st.solid.recolor(this.pal);
       st.glowB.recolor(this.pal);
+      st.parts?.recolor(this.pal);
     }
     this.#paintWordmark();
     this.traffic.recolor(this.pal);
@@ -595,6 +639,7 @@ export class City {
       }
     }
 
+    for (const st of this.stations) st.anim?.forEach((f) => f(dt, t));
     for (const r of this.robots) r.update(dt, t);
     this.traffic.update(dt);
     this.crowd.update(dt, t);

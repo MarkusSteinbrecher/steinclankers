@@ -80,17 +80,6 @@
       "repos": ["claude-mods"]
     },
     {
-      "id": "insight",
-      "name": "Insight",
-      "status": "paused",
-      "kind": "Research tool",
-      "glyph": "lens",
-      "blurb": "A research engine for consultants: from \"research topic X\" to a sourced, defensible position, with every claim traceable back to its source.",
-      "site": "https://markussteinbrecher.github.io/insight/",
-      "repo": "https://github.com/MarkusSteinbrecher/insight",
-      "repos": ["Insight"]
-    },
-    {
       "id": "squash",
       "name": "squash",
       "status": "paused",
@@ -101,6 +90,11 @@
       "repos": ["squash"]
     }
   ],
+  "cafe": {
+    "name": "Clanker Café",
+    "blurb": "The coffee place in the middle of town. If rrradio keeps you company while you work, you can buy it a coffee here: tips go to rrradio through Ko-fi and help keep the stations streaming.",
+    "site": "https://ko-fi.com/rrradio"
+  },
   "lab": {
     "name": "The Lab",
     "blurb": "Prototypes that aren't ready to show yet. The clankers go in and out all day; what comes out stays behind the shutter for now.",

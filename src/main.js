@@ -4,8 +4,8 @@ import { el, graph, statusBadge, lastCommit, num, links, sumRange } from './ui/r
 
 const $ = (s) => document.querySelector(s);
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const order = [...data.projects.map((p) => p.id), 'lab', 'hq'];
-const byId = Object.fromEntries([...data.projects, { ...data.lab, id: 'lab', kind: 'lab', status: 'active' }, { ...data.hq, id: 'hq', kind: 'hq', status: 'active' }].map((p) => [p.id, p]));
+const order = [...data.projects.map((p) => p.id), 'lab', 'hq', ...(data.cafe ? ['cafe'] : [])];
+const byId = Object.fromEntries([...data.projects, { ...data.lab, id: 'lab', kind: 'lab', status: 'active' }, { ...data.hq, id: 'hq', kind: 'hq', status: 'active' }, ...(data.cafe ? [{ ...data.cafe, id: 'cafe', kind: 'cafe', status: 'active' }] : [])].map((p) => [p.id, p]));
 let city = null;
 
 // ---------- theme ----------
@@ -45,6 +45,13 @@ function showPanel(st) {
   const isHq = p.kind === 'hq', isLab = p.kind === 'lab';
   $('#panel-title').textContent = p.name;
   $('#panel-blurb').textContent = p.blurb;
+  if (p.kind === 'cafe') {
+    $('#panel-badges').replaceChildren(el('span', { class: 'sd-badge', 'data-tone': 'accent', text: 'Coffee' }), el('span', { class: 'sd-badge', text: 'Supports rrradio' }));
+    $('#panel-graph').replaceChildren();
+    $('#panel-stats').replaceChildren();
+    $('#panel-links').replaceChildren(el('a', { class: 'sd-button', 'data-variant': 'primary', href: p.site, target: '_blank', rel: 'noopener' }, 'Buy rrradio a coffee', el('span', { class: 'icon icon-external', 'aria-hidden': 'true' })));
+    return openPanel(p);
+  }
   $('#panel-badges').replaceChildren(...[
     ...(isHq ? [el('span', { class: 'sd-badge', 'data-tone': 'accent', text: 'Headquarters' })] : [statusBadge(p.status)]),
     p.kind && !isHq && !isLab ? el('span', { class: 'sd-badge', text: p.kind }) : null,
@@ -61,6 +68,9 @@ function showPanel(st) {
     ...(isHq ? row('Stations', String(data.projects.length + 1)) : row('Last commit', lastCommit(p.last))),
   );
   $('#panel-links').replaceChildren(...links(p));
+  openPanel(p);
+}
+function openPanel(p) {
   panel.hidden = false;
   if (location.hash !== `#${p.id}`) history.replaceState(null, '', `#${p.id}`);
   updateShift();
@@ -88,6 +98,7 @@ addEventListener('keydown', (e) => {
 function buildList() {
   $('#list-intro').textContent = data.hq.blurb;
   $('#list-note').textContent = `Plus ${data.lab.count} more in the lab, not public yet. Commit data from ${lastCommit(data.generated)}.`;
+  if (data.cafe) $('#list-note').append(' ', el('a', { href: data.cafe.site, target: '_blank', rel: 'noopener' }, 'Buy rrradio a coffee'), '.');
   $('#project-list').replaceChildren(...data.projects.map((p) => el('li', { class: 'project-row' },
     el('div', { class: 'project-main' },
       el('div', { class: 'project-top' }, el('h2', { text: p.name }), statusBadge(p.status), el('span', { class: 'sd-badge', text: p.kind })),

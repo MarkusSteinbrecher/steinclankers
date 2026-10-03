@@ -4,7 +4,7 @@
 
 Live: https://markussteinbrecher.github.io/steinclankers/
 
-Home page of Stein&Clankers, the umbrella over all our projects. It is Clanker City, a small isometric 3D city ringed by grass, mountains and a lake. Every project is a glass office with its logo on the roof and its real 12-week commit graph as contribution-graph cells in the plaza in front; the HQ carries the Stein&Clankers wordmark in 3D letters. Robots carry commits to the buildings while cars, clankers, birds, a blimp, balloons and drones keep the city busy. Paused projects have grey signs and a sleeping robot. There is also a plain list view at `#list`.
+Home page of Stein&Clankers, the umbrella over all our projects. It is Clanker City, a small isometric 3D city ringed by grass, mountains and a lake. Every project has a building of its own (a radio station for rrradio, an academy for meinHERMES, a bistro for rrrecipe…), sized by its lifetime commits, with its logo on the roof and its real 12-week commit graph as contribution-graph cells in the plaza in front; the HQ carries the Stein&Clankers wordmark in 3D letters. Robots carry commits to the buildings while cars, clankers, birds, a blimp, balloons and drones keep the city busy. Paused projects have grey signs and a sleeping robot. The Clanker Café in the HQ plaza links to rrradio's Ko-fi page. There is also a plain list view at `#list`.
 
 ## Run
 
@@ -24,7 +24,8 @@ npm run build      # static site in dist/
 
 | Path | What |
 |---|---|
-| `src/scene/city.js` | Renderer, camera, HQ, project buildings, robots, interaction, loop |
+| `src/scene/city.js` | Renderer, camera, HQ, project stations, robots, interaction, loop |
+| `src/scene/city/buildings.js` | One architecture per project (radio station, academy, bistro, …) |
 | `src/scene/city/layout.js` | Street grid, cell classes, block plan, path finding |
 | `src/scene/city/ground.js` | Grass, asphalt, block slabs, contribution-graph cells |
 | `src/scene/city/furnish.js` | Towers, houses, parks, stadium, works, parking, lamps, street trees |

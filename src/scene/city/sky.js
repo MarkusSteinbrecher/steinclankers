@@ -169,8 +169,8 @@ export class Effects {
     this.chimneys.forEach((c, ci) => {
       for (let k = 0; k < 8; k++) {
         const p = (T * 0.22 + k / 8 + ci * 0.37) % 1;
-        const s = 0.4 + p * 1.3;
-        this.#m.makeScale(s, s, s).setPosition(c.x + p * 2.5 + Math.sin(p * 6 + k) * 0.3, c.y + p * 5, c.z - p * 1.2);
+        const s = (0.4 + p * 1.3) * (c.s || 1);
+        this.#m.makeScale(s, s, s).setPosition(c.x + (p * 2.5 + Math.sin(p * 6 + k) * 0.3) * (c.s || 1), c.y + p * 5 * (c.s || 1), c.z - p * 1.2 * (c.s || 1));
         this.smoke.setMatrixAt(n++, this.#m);
       }
     });

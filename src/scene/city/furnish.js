@@ -4,11 +4,11 @@ export const LOT = 0.22; // top of a block's lot slab
 
 // Furnishes the city. Static boxes go into `solid` (lit) or `glow` (unlit: windows, lamps),
 // trees into `trees`. Returns anchors for moving things.
-export function furnish(ground, solid, glow, trees) {
+export function furnish(ground, solid, glow, trees, stationBlocks = STATION_BLOCKS) {
   const R = rng(20261003);
   const pick = (arr) => arr[Math.floor(R() * arr.length)];
   const out = { chimneys: [], parking: [], rooftops: [], fountains: [] };
-  const taken = new Set(STATION_BLOCKS.map(([x, z]) => `${x},${z}`));
+  const taken = new Set(stationBlocks.map(([x, z]) => `${x},${z}`));
   taken.add('0,0');
 
   // ----- street furniture: markings, lamps, street trees -----

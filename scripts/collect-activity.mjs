@@ -60,6 +60,7 @@ const result = {
     console.log(p.id);
     return { ...strip(p), ...activity(reposOf(p.id, p.repos)) };
   }),
+  cafe: config.cafe,
   lab: { ...strip(config.lab), count: reposOf('lab', config.lab.repos).length, ...activity(reposOf('lab', config.lab.repos)) },
 };
 
