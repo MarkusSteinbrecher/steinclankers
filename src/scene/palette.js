@@ -41,6 +41,21 @@ export function palette(theme) {
   return out;
 }
 
+// Blend two scene palettes: t = 0 gives a, t = 1 gives b. Used for the fade into night.
+export function mixPalette(a, b, t) {
+  const out = {};
+  for (const [k, x] of Object.entries(a)) {
+    const y = b[k];
+    if (k === 'light') {
+      out.light = {};
+      for (const [n, v] of Object.entries(x)) out.light[n] = typeof v === 'number' ? v + (y[n] - v) * t : new THREE.Color(v).lerp(new THREE.Color(y[n]), t);
+    } else if (Array.isArray(x)) out[k] = x.map((c, i) => c.clone().lerp(y[i], t));
+    else if (x?.isColor) out[k] = x.clone().lerp(y, t);
+    else out[k] = x;
+  }
+  return out;
+}
+
 // Reads a SteinerDesign role (OKLCH) as sRGB by painting it on a 1px canvas.
 export function cssColor(name) {
   const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim() || 'red';

@@ -9,28 +9,31 @@ const byId = Object.fromEntries([...data.projects, { ...data.lab, id: 'lab', kin
 let city = null;
 
 // ---------- theme ----------
-function applyThemeImages() {
-  const t = currentTheme();
-  document.querySelectorAll('img[data-light]').forEach((img) => { img.src = img.dataset[t]; });
+// With the city running, day and night follow the sun over Zurich and the page theme follows
+// the city. The toggle pins day or night (with a slow fade) until "Back to live".
+// Without WebGL the toggle is a plain light/dark switch.
+function setTheme(t) {
   document.documentElement.dataset.theme = t;
+  document.querySelectorAll('img[data-light]').forEach((img) => { img.src = img.dataset[t]; });
 }
-const storedTheme = () => { try { return localStorage.getItem('theme'); } catch { return null; } };
-const savedTheme = storedTheme();
-if (savedTheme) document.documentElement.dataset.theme = savedTheme;
-applyThemeImages();
+setTheme(currentTheme());
 $('#theme-toggle').addEventListener('click', () => {
-  const next = currentTheme() === 'dark' ? 'light' : 'dark';
-  document.documentElement.dataset.theme = next;
-  try { localStorage.setItem('theme', next); } catch {}
-  applyThemeImages();
-  city?.setTheme(next);
+  if (!city) return setTheme(currentTheme() === 'dark' ? 'light' : 'dark');
+  city.setManual(city.nightTarget() < 0.5 ? 1 : 0); // the page theme flips halfway through the fade
+  updateClock();
 });
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-  if (storedTheme()) return;
-  delete document.documentElement.dataset.theme;
-  applyThemeImages();
-  city?.setTheme(currentTheme());
+$('#live').addEventListener('click', () => {
+  city?.setManual(null);
+  updateClock();
 });
+const zurichTime = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Zurich', hour: '2-digit', minute: '2-digit' });
+function updateClock() {
+  if (!city) return;
+  const live = city.manual === null;
+  $('#clock').hidden = !live;
+  $('#live').hidden = live;
+  $('#clock-time').textContent = zurichTime.format(city.now());
+}
 
 // ---------- panel ----------
 const panel = $('#panel');
@@ -138,6 +141,9 @@ function webglOK() {
 }
 
 buildList();
+// Real commits in the window, every repo in the city (projects, the Lab and the HQ).
+$('#commit-total').textContent = num([...data.projects, data.lab, data.hq].reduce((a, p) => a + sumRange(p.counts, data), 0));
+$('#counter-weeks').textContent = $('#counter-weeks-short').textContent = data.weeks;
 const intro = $('#intro');
 const finishIntro = () => {
   if (intro.classList.contains('is-done')) return;
@@ -149,16 +155,17 @@ const finishIntro = () => {
 if (webglOK()) {
   const [{ City }, { ensureFonts }] = await Promise.all([import('./scene/city.js'), import('./scene/city/signs.js')]);
   await ensureFonts();
-  let delivered = 0;
   city = new City({
     container: $('#stage'),
     data,
-    theme: currentTheme(),
     reducedMotion,
+    onPhase: (phase) => setTheme(phase),
     onSelect: (st) => showPanel(st),
-    onDeliver: () => { $('#delivered').textContent = num(++delivered); },
   });
   window.__city = city;
+  setTheme(city.phase);
+  updateClock();
+  setInterval(updateClock, 20000);
 }
 
 if (!city || reducedMotion || location.hash === '#list') {

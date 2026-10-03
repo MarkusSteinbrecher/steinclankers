@@ -31,6 +31,8 @@ main { position: relative; }
   background: var(--bg-raised); border: var(--border-hairline) solid var(--border-subtle); border-radius: var(--radius-lg);
 }
 .nav-chip.sd-nav__end { padding: 0 var(--space-1); align-items: center; gap: var(--space-1); }
+.clock { font: var(--font-caption); letter-spacing: var(--tracking-xs); padding: 0 var(--space-2) 0 var(--space-3); white-space: nowrap; }
+.clock[hidden], #live[hidden] { display: none; }
 .nav-chip .sd-nav__link { margin-bottom: 0; }
 .nav-logo { display: block; height: 22px; width: auto; }
 
@@ -63,6 +65,7 @@ main { position: relative; }
   right: var(--space-gutter); bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
   display: flex; align-items: baseline; gap: var(--space-2);
 }
+.counter-short { display: none; }
 .counter-value { font: var(--weight-medium) var(--text-lg) / 1 var(--font-mono); color: var(--fg-default); }
 
 /* Station labels (CSS2DRenderer); they are buttons, so the floor is keyboard-reachable */
@@ -153,7 +156,8 @@ body.view-list .factory { visibility: hidden; }
   .panel-title { font-size: var(--text-2xl); line-height: var(--leading-2xl); }
   .panel .graph { max-width: 240px; }
   .panel-blurb { font: var(--font-body); }
-  .hud-counter .sd-muted { display: none; }
+  .counter-long { display: none; }
+  .counter-short { display: inline; }
   .project-row { grid-template-columns: 1fr; gap: var(--space-4); }
   .nav-logo { height: 18px; }
   .nav-chip { gap: var(--space-3); padding: 0 var(--space-3); }

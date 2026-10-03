@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
-import { palette, level } from './palette.js';
+import { palette, level, mixPalette } from './palette.js';
+import { sunPosition, skyDirection, nightFromAlt, MOON, DEFAULT_SUN } from './city/sun.js';
 import { markGrid } from './glyphs.js';
 import { Robot, robotMaterials } from './robot.js';
 import { P, W, X0, CLS, STATION_BLOCKS, baseClass, bfs, corners } from './city/layout.js';
@@ -18,19 +19,31 @@ import { building, cafe, Parts, FH } from './city/buildings.js';
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const backOut = (t) => 1 + 2.2 * Math.pow(t - 1, 3) + 1.2 * Math.pow(t - 1, 2);
 const PAN_LIMIT = 70;
-const SUN = new THREE.Vector3(14, 60, 40);
+const FADE = 3; // seconds for a manual switch between day and night
+const WARM = new THREE.Color('#FFB27A');
+const WHITE = new THREE.Color('#FFFFFF');
 
 // Clanker City: a small city with a street grid, ringed by grass, mountains and a lake.
 // Every project has a building of its own (size from its lifetime commits) with its logo on
 // the roof and the facade, and its real commit graph as contribution-graph cells in the plaza.
 export class City {
-  constructor({ container, data, theme, reducedMotion, onSelect, onDeliver }) {
+  constructor({ container, data, reducedMotion, onSelect, onDeliver, onPhase }) {
     this.container = container;
     this.data = data;
     this.still = reducedMotion;
     this.onSelect = onSelect;
     this.onDeliver = onDeliver;
-    this.pal = palette(theme);
+    this.onPhase = onPhase;
+    // Day and night palettes; the scene shows a blend. `night` follows the sun over Zurich
+    // unless `manual` pins it to day (0) or night (1).
+    this.pals = { day: palette('light'), night: palette('dark') };
+    this.clockOffset = 0; // ms, for testing other times of day
+    this.manual = null;
+    this.sunPos = sunPosition(this.now());
+    this.night = this.nightTarget();
+    this.applied = this.night;
+    this.phase = this.night > 0.5 ? 'dark' : 'light';
+    this.pal = mixPalette(this.pals.day, this.pals.night, this.night);
     this.stations = [];
     this.robots = [];
     this.flights = [];
@@ -98,6 +111,18 @@ export class City {
     sun.shadow.bias = -0.0004;
     sun.shadow.normalBias = 0.03;
     this.scene.add(sun, sun.target);
+
+    // A small sun and moon float over the city on their sky directions.
+    const disc = (r, color, haloR) => {
+      const g = new THREE.Group();
+      g.add(new THREE.Mesh(new THREE.SphereGeometry(r, 24, 16), new THREE.MeshBasicMaterial({ color, transparent: true, toneMapped: false })));
+      g.add(new THREE.Mesh(new THREE.SphereGeometry(haloR, 24, 16), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.18, depthWrite: false, toneMapped: false })));
+      this.scene.add(g);
+      return g;
+    };
+    this.sunDisc = disc(1.7, '#FFE7A0', 2.8);
+    this.moonDisc = disc(1.2, '#E6ECF2', 2.0);
+    this.lightDir = new THREE.Vector3();
   }
 
   // ---------- world ----------
@@ -548,8 +573,15 @@ export class City {
     this.hq.board.material.color.copy(this.pal.concrete);
   }
 
-  setTheme(theme) {
-    this.pal = palette(theme);
+  now() { return new Date(Date.now() + this.clockOffset); }
+
+  nightTarget() { return this.manual ?? nightFromAlt(this.sunPos.alt); }
+
+  // Pin the scene to day (0) or night (1) with a slow fade; null goes back to Zurich time.
+  setManual(n) { this.manual = n; }
+
+  #applyPalette(pal) {
+    this.pal = pal;
     const L = this.pal.light;
     this.hemi.color.set(L.hemiSky);
     this.hemi.groundColor.set(L.hemiGround);
@@ -613,8 +645,7 @@ export class City {
       tg.z = cz;
     }
     this.controls.update();
-    this.sun.target.position.set(tg.x, 0, tg.z);
-    this.sun.position.set(tg.x + SUN.x, SUN.y, tg.z + SUN.z);
+    this.#updateSky(dt, tg);
 
     const vs = this.viewShift;
     const kk = Math.min(1, dt * 6);
@@ -687,6 +718,50 @@ export class City {
 
     this.renderer.render(this.scene, this.camera);
     this.labels.render(this.scene, this.camera);
+  }
+
+  // Sun over Zurich -> light direction, colour and the day/night blend.
+  #updateSky(dt, tg) {
+    if (!this.skyClock || (this.skyClock -= dt) <= 0) {
+      this.sunPos = sunPosition(this.now());
+      this.skyClock = 5;
+    }
+    const target = this.nightTarget();
+    if (this.night !== target) {
+      const step = this.still ? 1 : dt / FADE;
+      this.night = target > this.night ? Math.min(target, this.night + step) : Math.max(target, this.night - step);
+    }
+    if (Math.abs(this.night - this.applied) > 0.004 || (this.night === target && this.applied !== target)) {
+      this.applied = this.night;
+      this.#applyPalette(mixPalette(this.pals.day, this.pals.night, this.night));
+    }
+    const phase = this.night > 0.5 ? 'dark' : 'light';
+    if (phase !== this.phase) {
+      this.phase = phase;
+      this.onPhase?.(phase);
+    }
+
+    // Light: the real sun by day (kept a little above the horizon so shadows stay sane),
+    // the moon by night, blended through twilight. Pinned day at a dark hour uses a noon sun.
+    const real = this.sunPos;
+    const day = this.manual === 0 && real.alt < 0.07 ? DEFAULT_SUN : { alt: Math.max(real.alt, 0.07), az: real.az };
+    const dayDir = skyDirection(day.alt, day.az, this.tmpA ||= new THREE.Vector3());
+    const moonDir = skyDirection(MOON.alt, MOON.az, this.tmpB ||= new THREE.Vector3());
+    this.lightDir.lerpVectors(dayDir, moonDir, this.night).normalize();
+    this.sun.target.position.set(tg.x, 0, tg.z);
+    this.sun.position.set(tg.x, 0, tg.z).addScaledVector(this.lightDir, 80);
+    const low = Math.min(1, Math.max(0, 1 - day.alt / (15 * Math.PI / 180)));
+    this.sun.color.copy(WHITE).lerp(WARM, low * (1 - this.night));
+
+    // Visible discs. The sun shows where it really is while it's up; the moon at night.
+    const sunUp = Math.min(1, Math.max(0, (real.alt + 0.03) / 0.06)) * (1 - this.night);
+    this.sunDisc.visible = sunUp > 0.01;
+    skyDirection(real.alt, real.az, this.tmpA);
+    this.sunDisc.position.set(tg.x, 0, tg.z).addScaledVector(this.tmpA, 62);
+    this.sunDisc.children.forEach((m, i) => { m.material.opacity = sunUp * (i ? 0.18 : 1); m.material.color.set('#FFE7A0').lerp(WARM, low); });
+    this.moonDisc.visible = this.night > 0.01;
+    this.moonDisc.position.set(tg.x, 0, tg.z).addScaledVector(moonDir, 62);
+    this.moonDisc.children.forEach((m, i) => { m.material.opacity = this.night * (i ? 0.15 : 1); });
   }
 
   dispose() {

@@ -62,11 +62,11 @@ export class Ground {
     const c = document.createElement('canvas');
     c.width = c.height = s;
     const ctx = c.getContext('2d');
-    ctx.fillStyle = `#${pal.grass.getHexString()}`;
+    ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, s, s);
     let seed = 7;
     const r = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-    ctx.fillStyle = `#${pal.grassDark.getHexString()}`;
+    ctx.fillStyle = '#E0E0E0';
     for (let k = 0; k < 900; k++) ctx.fillRect(r() * s, r() * s, 2 + r() * 3, 2 + r() * 3);
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
@@ -77,9 +77,12 @@ export class Ground {
 
   recolor(pal) {
     this.pal = pal;
-    this.grass.material.map?.dispose();
-    this.grass.material.map = this.#grassTexture(pal);
-    this.grass.material.needsUpdate = true;
+    // The speckle texture is neutral and made once; the material colour tints it.
+    if (!this.grass.material.map) {
+      this.grass.material.map = this.#grassTexture(pal);
+      this.grass.material.needsUpdate = true;
+    }
+    this.grass.material.color.copy(pal.grass);
     this.slabs.recolor(pal);
     const c = new THREE.Color();
     this.cells.forEach((cell, i) => this.cellMesh.setColorAt(i, c.copy(pal.levels[cell.lvl])));

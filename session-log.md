@@ -23,3 +23,10 @@
 - Checked in the browser, light and dark, no console errors. Not committed or deployed yet.
 - Open: the design-system repo has only 4 local commits, so SteinerDesign gets one of the smallest buildings; real-phone performance check still pending.
 - Added the Clanker Café in the HQ plaza (kiosk with a Ko-fi-blue awning, a giant cup on the roof and a terrace). Clicking it opens the panel with a "Buy rrradio a coffee" button to https://ko-fi.com/rrradio (the link rrradio.org uses); the list view has the same link. Config lives under `cafe` in projects.config.json.
+
+## 2026-10-03 (evening): Zurich sun and night fade (ADR 0005)
+- The scene light now follows the real sun over Zurich (`src/scene/city/sun.js`): direction, shadow length, warm low sun, a sun disc over the city and a moon at night. Day and night palettes blend through civil twilight, and the page theme follows the city.
+- The theme button pins day or night with a 3-second fade; "Back to live" in the nav returns to Zurich time, and the nav shows a Zurich clock while live.
+- Checked in the browser: dusk at 19:01 (sun -0.9°, matches sunset), simulated noon, toggle fade both ways, back to live. Not committed yet.
+- The bottom-right counter now shows real commits across all repos in the last 12 weeks (same number as the HQ panel) instead of counting robot deliveries; phones show a short label.
+- Open: the sun and moon are floating discs in an isometric view (there is no sky in frame); see whether that reads well or should become a HUD sun dial.
