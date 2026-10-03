@@ -1,0 +1,109 @@
+{
+  "$comment": "Source of truth for what the public site shows. Only entries listed here appear. 'repos' are local folders under ~/Code, read only for commit counts (no messages, no names). Private repos (the Lab, private back ends) are listed only in the gitignored projects.private.json and summed in without names.",
+  "hq": {
+    "name": "Stein&Clankers HQ",
+    "blurb": "Stein&Clankers is the umbrella over everything we build: one human, a crew of clankers, and a lot of small, carefully made tools. Every building with a logo on its roof is a real project, and the plaza in front of it is that project's real commit history.",
+    "repos": ["steinclankers", "HQ"]
+  },
+  "projects": [
+    {
+      "id": "rrradio",
+      "name": "rrradio",
+      "status": "active",
+      "kind": "Web · iOS · Android",
+      "glyph": "radio",
+      "blurb": "Internet radio, done properly. One curated catalogue of stations with live now-playing, on the web, iPhone, Apple Watch, CarPlay and Android.",
+      "site": "https://rrradio.org",
+      "repo": "https://github.com/MarkusSteinbrecher/rrradio",
+      "repos": ["rrradio", "rrradio-ios", "rrradio-android"]
+    },
+    {
+      "id": "archipelago",
+      "name": "Archipelago",
+      "status": "active",
+      "kind": "Web app",
+      "glyph": "islands",
+      "blurb": "Open-source, local-first enterprise architecture in the browser. ArchiMate 3.2 at its core, a portfolio view on top, and your data never leaves your machine.",
+      "site": "https://markussteinbrecher.github.io/Enterprise-Architecture/",
+      "repo": "https://github.com/MarkusSteinbrecher/Enterprise-Architecture",
+      "repos": ["Enterprise Architecture"]
+    },
+    {
+      "id": "meinhermes",
+      "name": "meinHERMES",
+      "status": "active",
+      "kind": "Study site · German",
+      "glyph": "book",
+      "blurb": "Free, unofficial study site for the HERMES 2022 project-management exam of the Swiss federal administration. Every element links back to the official reference manual.",
+      "site": "https://markussteinbrecher.github.io/meinHERMES/",
+      "repo": "https://github.com/MarkusSteinbrecher/meinHERMES",
+      "repos": ["meinHERMES"]
+    },
+    {
+      "id": "meinesteuer",
+      "name": "meineSteuer",
+      "status": "active",
+      "kind": "Explainer · German",
+      "glyph": "cross",
+      "blurb": "A free, neutral guide to Swiss tax law and the tax return for private persons, always pointing back to the official sources.",
+      "site": "https://markussteinbrecher.github.io/meineSteuer/",
+      "repo": "https://github.com/MarkusSteinbrecher/meineSteuer",
+      "repos": ["meineSteuer"]
+    },
+    {
+      "id": "rrrecipe",
+      "name": "rrrecipe",
+      "status": "active",
+      "kind": "Web app",
+      "glyph": "pot",
+      "blurb": "A recipe app built around hands-free cooking: tap, swipe or speak to move to the next step when your hands are covered in flour.",
+      "site": "https://markussteinbrecher.github.io/rrrecipe/",
+      "repo": "https://github.com/MarkusSteinbrecher/rrrecipe",
+      "repos": ["rrrecipe"]
+    },
+    {
+      "id": "steinerdesign",
+      "name": "SteinerDesign",
+      "status": "active",
+      "kind": "Design system",
+      "glyph": "grid",
+      "blurb": "The design system under all of this: near-white and graphite neutrals, one signal red for what you can act on, structure drawn with 1px lines on a 4px grid.",
+      "repos": ["design-system"]
+    },
+    {
+      "id": "claude-mods",
+      "name": "claude-mods",
+      "status": "active",
+      "kind": "Claude Code plugins",
+      "glyph": "plug",
+      "blurb": "Mods that run inside Claude Code: live panes, status lines and hooks that make the clankers nicer to work with.",
+      "repos": ["claude-mods"]
+    },
+    {
+      "id": "insight",
+      "name": "Insight",
+      "status": "paused",
+      "kind": "Research tool",
+      "glyph": "lens",
+      "blurb": "A research engine for consultants: from \"research topic X\" to a sourced, defensible position, with every claim traceable back to its source.",
+      "site": "https://markussteinbrecher.github.io/insight/",
+      "repo": "https://github.com/MarkusSteinbrecher/insight",
+      "repos": ["Insight"]
+    },
+    {
+      "id": "squash",
+      "name": "squash",
+      "status": "paused",
+      "kind": "Daily digest",
+      "glyph": "funnel",
+      "blurb": "A daily YouTube-news squasher: curated channels go in, one short digest comes out.",
+      "repo": "https://github.com/MarkusSteinbrecher/squash",
+      "repos": ["squash"]
+    }
+  ],
+  "lab": {
+    "name": "The Lab",
+    "blurb": "Prototypes that aren't ready to show yet. The clankers go in and out all day; what comes out stays behind the shutter for now.",
+    "repos": []
+  }
+}

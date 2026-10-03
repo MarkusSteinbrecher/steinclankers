@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Stein&amp;Clankers</title>
+  <meta name="description" content="Stein&amp;Clankers: one human, a crew of clankers, and every project we build, in a little city built from our real commit history.">
+  <link rel="icon" href="brand/stein-clankers-favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="vendor/steinerdesign/assets/fonts/hanken-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="vendor/steinerdesign/dist/steiner.css">
+  <link rel="stylesheet" href="/src/site.css">
+</head>
+<body>
+  <nav class="sd-nav site-nav" aria-label="Main">
+    <div class="nav-chip">
+    <a class="sd-nav__brand" href="./" aria-label="Stein&amp;Clankers home">
+      <img class="nav-logo" src="brand/stein-clankers-lockup.svg" data-light="brand/stein-clankers-lockup.svg" data-dark="brand/stein-clankers-lockup-dark.svg" alt="Stein&amp;Clankers" height="22">
+    </a>
+    <ul class="sd-nav__links" role="list">
+      <li><a class="sd-nav__link" href="#city" data-view="city" aria-current="page">City</a></li>
+      <li><a class="sd-nav__link" href="#list" data-view="list">All projects</a></li>
+    </ul>
+    </div>
+    <div class="sd-nav__end nav-chip">
+      <button type="button" data-variant="ghost" data-icon-only data-size="sm" id="theme-toggle" aria-label="Switch theme">
+        <span class="icon icon-theme" aria-hidden="true"></span>
+      </button>
+    </div>
+  </nav>
+
+  <main>
+    <section id="city" class="factory" aria-label="Clanker City">
+      <div id="stage" class="stage"></div>
+
+      <div class="hud hud-hint" id="hint">
+        <span class="hint-fine">Drag to move · scroll or pinch to zoom · right-drag to turn · click a station</span>
+        <span class="hint-coarse">Drag to move · pinch to zoom · tap a station</span>
+      </div>
+      <div class="hud hud-counter" aria-live="off">
+        <span class="sd-muted">Commits delivered while you watched</span>
+        <span class="sd-num counter-value" id="delivered">0</span>
+      </div>
+
+      <aside id="panel" class="panel" aria-labelledby="panel-title" hidden>
+        <div class="panel-head">
+          <div class="sd-cluster panel-badges" id="panel-badges"></div>
+          <div class="sd-cluster">
+            <button type="button" data-variant="ghost" data-icon-only data-size="sm" id="panel-prev" aria-label="Previous station"><span class="icon icon-left" aria-hidden="true"></span></button>
+            <button type="button" data-variant="ghost" data-icon-only data-size="sm" id="panel-next" aria-label="Next station"><span class="icon icon-right" aria-hidden="true"></span></button>
+            <button type="button" data-variant="ghost" data-icon-only data-size="sm" id="panel-close" aria-label="Close"><span class="icon icon-x" aria-hidden="true"></span></button>
+          </div>
+        </div>
+        <h2 class="panel-title" id="panel-title"></h2>
+        <p class="panel-blurb" id="panel-blurb"></p>
+        <div class="panel-graph" id="panel-graph"></div>
+        <dl class="panel-stats" id="panel-stats"></dl>
+        <div class="sd-cluster panel-links" id="panel-links"></div>
+      </aside>
+
+      <div id="intro" class="intro" aria-hidden="true">
+        <img class="intro-mark" src="brand/stein-clankers-mark-animated.svg" data-light="brand/stein-clankers-mark-animated.svg" data-dark="brand/stein-clankers-mark-animated-dark.svg" alt="">
+        <span class="intro-skip sd-muted">Click to skip</span>
+      </div>
+    </section>
+
+    <section id="list" class="list-view" aria-labelledby="list-title" hidden>
+      <div class="sd-container list-inner">
+        <header class="list-head">
+          <h1 id="list-title">Everything in the city</h1>
+          <p class="list-intro" id="list-intro"></p>
+          <p class="sd-muted list-note" id="list-note"></p>
+        </header>
+        <ul class="sd-list project-list" id="project-list" role="list"></ul>
+      </div>
+    </section>
+  </main>
+
+  <noscript>
+    <p class="noscript">This page is a small 3D city and needs JavaScript. The projects: rrradio (rrradio.org), Archipelago, meinHERMES, meineSteuer, rrrecipe, SteinerDesign, claude-mods, Insight and squash.</p>
+  </noscript>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
