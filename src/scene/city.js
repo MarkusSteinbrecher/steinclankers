@@ -6,6 +6,7 @@ import { palette, level, mixPalette } from './palette.js';
 import { sunPosition, skyDirection, nightFromAlt, MOON, DEFAULT_SUN } from './city/sun.js';
 import { markGrid } from './glyphs.js';
 import { Robot, robotMaterials } from './robot.js';
+import { Human } from './human.js';
 import { P, W, X0, CLS, STATION_BLOCKS, baseClass, bfs, corners } from './city/layout.js';
 import { Ground } from './city/ground.js';
 import { VoxelBatch, resolve } from './city/voxels.js';
@@ -163,6 +164,7 @@ export class City {
 
     this.robotMats = robotMaterials(this.pal);
     this.#buildRobots();
+    if (d.human) this.#buildHuman(d.human);
     this.traffic = new Traffic(this.city, this.pal, anchors.parking, 40, this.still);
     this.crowd = new Crowd(this.city, this.pal, this.walk, 18, this.still);
     this.effects = new Effects(this.city, this.pal, anchors.chimneys, anchors.fountains, this.still);
@@ -311,7 +313,7 @@ export class City {
     const z0 = -2.25 + d / 2; // building centre: the back wall stays on the same line for every size
     const res = building(st.id, {
       solid: st.solid, glow: st.glowB, parts: st.parts, trees: this.trees, rnd, w, d, floors, z0, paused,
-      lit: paused ? 0.03 : 0.55, still: this.still, anim: st.anim, chimneys: paused ? [] : this.stationChimneys, wx: st.bxC, wz: st.bzC,
+      lit: paused ? 0.03 : 0.55, still: this.still, anim: st.anim, count: e.count, chimneys: paused ? [] : this.stationChimneys, wx: st.bxC, wz: st.bzC,
     });
 
     // Logo: a billboard on the roof (turned to the camera) and a sign on the side facade.
@@ -432,6 +434,26 @@ export class City {
     }
   }
 
+  // The human walks between the project buildings, the HQ and the café.
+  #buildHuman(h) {
+    const stops = [];
+    for (const st of this.stations) {
+      if (st.kind === 'project' || st.kind === 'lab') {
+        const door = [st.side > 0 ? st.cx + 7 : st.cx - 8, st.cz - 5];
+        const x = st.bxC + st.side * Math.min(st.w / 2 + 1.4, 6.8);
+        stops.push({ door, approach: [{ x: door[0], z: st.bzC + 1 }, { x, z: st.bzC + 1 }], face: st.side > 0 ? -Math.PI / 2 : Math.PI / 2 });
+      } else if (st.kind === 'cafe') stops.push({ door: [7, 3], approach: [{ x: 6.2, z: 4.4 }], face: -Math.PI / 2 });
+      else if (st.kind === 'hq') stops.push({ door: [-8, 1], approach: [{ x: -6.6, z: 1 }], face: Math.PI });
+    }
+    const human = (this.human = new Human(this.walk, stops, this.still));
+    this.city.add(human.group);
+    const st = { ...h, id: 'human', kind: 'person', status: 'active', group: human.group, robots: [], pulse: -1 };
+    Object.defineProperty(st, 'focus', { get: () => human.group.position.clone().setY(1.5) });
+    this.#label(st, 0, 2.6, 0);
+    human.group.traverse((o) => { o.userData.station = st; });
+    this.stations.push(st);
+  }
+
   #addRobot(r, st) {
     this.city.add(r.group);
     this.robots.push(r);
@@ -528,8 +550,9 @@ export class City {
     if (st) {
       st.labelEl.setAttribute('aria-pressed', 'true');
       const target = st.focus || (st.kind === 'hq' ? new THREE.Vector3(-0.5, 2, -1) : new THREE.Vector3(st.bxC, st.floors * 0.4, st.cz - 1.5));
-      this.#flyTo(target, st.kind === 'cafe' ? 2.6 : st.kind === 'hq' ? 1.8 : 1.9);
+      this.#flyTo(target, st.kind === 'cafe' || st.kind === 'person' ? 2.6 : st.kind === 'hq' ? 1.8 : 1.9);
       st.robots.forEach((r, i) => setTimeout(() => r.poke(), 300 + i * 160));
+      if (st.kind === 'person') this.human.poke();
     }
     this.onSelect?.(st);
   }
@@ -595,8 +618,8 @@ export class City {
     this.trees.recolor(this.pal);
     this.landscape.recolor(this.pal);
     for (const st of this.stations) {
-      st.solid.recolor(this.pal);
-      st.glowB.recolor(this.pal);
+      st.solid?.recolor(this.pal);
+      st.glowB?.recolor(this.pal);
       st.parts?.recolor(this.pal);
     }
     this.#paintWordmark();
@@ -672,6 +695,7 @@ export class City {
 
     for (const st of this.stations) st.anim?.forEach((f) => f(dt, t));
     for (const r of this.robots) r.update(dt, t);
+    this.human?.update(dt, t);
     this.traffic.update(dt);
     this.crowd.update(dt, t);
     this.sky.update(dt, t);

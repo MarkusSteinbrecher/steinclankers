@@ -16,6 +16,10 @@ const GEO = {
 
 const LINES = ['beep', 'boop', 'commit!', 'ship it', 'on it', 'lgtm', 'rebasing…', 'tests green', 'one more fix', 'hi!'];
 const SPEED = 2.8;
+// The clankers are grey; their clothes are colourful (scene values, like the logo signs).
+export const CLOTHES = ['#E5322B', '#2F6FDE', '#F2C230', '#F28C28', '#8E5BD6', '#2BA8A0', '#E0457B', '#FFFFFF', '#3FA34D'];
+const shirts = CLOTHES.map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.85 }));
+let nextShirt = 0;
 
 export class Robot {
   constructor(mats, opts = {}) {
@@ -46,7 +50,7 @@ export class Robot {
     this.rig = new THREE.Group();
     g.add(this.rig);
     add(GEO.base, mats.rubber, 0, 0.13, 0, this.rig);
-    add(GEO.body, mats.metal, 0, 0.45, 0, this.rig);
+    add(GEO.body, shirts[nextShirt++ % shirts.length], 0, 0.45, 0, this.rig);
     this.head = new THREE.Group();
     this.head.position.set(0, 0.95, 0);
     this.rig.add(this.head);
@@ -225,9 +229,9 @@ export function robotMaterials(pal) {
     metal: std(pal.metal),
     metalDark: std(pal.metalDark),
     rubber: std(pal.rubber, { roughness: 0.95 }),
-    head: std(pal.levels[2]),
-    eye: std(pal.levels[4], { emissive: pal.levels[4], emissiveIntensity: 0.35 }),
-    bulb: std(pal.levels[4], { emissive: pal.levels[4], emissiveIntensity: 0.9 }),
+    head: std(pal.botHead),
+    eye: std(pal.botEye, { emissive: pal.botEye, emissiveIntensity: 0.35 }),
+    bulb: std(pal.botBulb, { emissive: pal.botBulb, emissiveIntensity: 0.9 }),
     bulbOff: std(pal.metalDark),
     cargo: std(pal.levels[3]),
   };
@@ -235,11 +239,11 @@ export function robotMaterials(pal) {
     mats.metal.color.copy(p.metal);
     mats.metalDark.color.copy(p.metalDark);
     mats.rubber.color.copy(p.rubber);
-    mats.head.color.copy(p.levels[2]);
-    mats.eye.color.copy(p.levels[4]);
-    mats.eye.emissive.copy(p.levels[4]);
-    mats.bulb.color.copy(p.levels[4]);
-    mats.bulb.emissive.copy(p.levels[4]);
+    mats.head.color.copy(p.botHead);
+    mats.eye.color.copy(p.botEye);
+    mats.eye.emissive.copy(p.botEye);
+    mats.bulb.color.copy(p.botBulb);
+    mats.bulb.emissive.copy(p.botBulb);
     mats.bulbOff.color.copy(p.metalDark);
     mats.cargo.color.copy(p.levels[3]);
   };

@@ -4,8 +4,8 @@ import { el, graph, statusBadge, lastCommit, num, links, sumRange } from './ui/r
 
 const $ = (s) => document.querySelector(s);
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const order = [...data.projects.map((p) => p.id), 'lab', 'hq', ...(data.cafe ? ['cafe'] : [])];
-const byId = Object.fromEntries([...data.projects, { ...data.lab, id: 'lab', kind: 'lab', status: 'active' }, { ...data.hq, id: 'hq', kind: 'hq', status: 'active' }, ...(data.cafe ? [{ ...data.cafe, id: 'cafe', kind: 'cafe', status: 'active' }] : [])].map((p) => [p.id, p]));
+const order = [...data.projects.map((p) => p.id), 'lab', 'hq', ...(data.cafe ? ['cafe'] : []), ...(data.human ? ['human'] : [])];
+const byId = Object.fromEntries([...data.projects, { ...data.lab, id: 'lab', kind: 'lab', status: 'active' }, { ...data.hq, id: 'hq', kind: 'hq', status: 'active' }, ...(data.cafe ? [{ ...data.cafe, id: 'cafe', kind: 'cafe', status: 'active' }] : []), ...(data.human ? [{ ...data.human, id: 'human', kind: 'person', status: 'active' }] : [])].map((p) => [p.id, p]));
 let city = null;
 
 // ---------- theme ----------
@@ -48,6 +48,15 @@ function showPanel(st) {
   const isHq = p.kind === 'hq', isLab = p.kind === 'lab';
   $('#panel-title').textContent = p.name;
   $('#panel-blurb').textContent = p.blurb;
+  if (p.kind === 'person') {
+    const recent = [...data.projects, data.lab, data.hq].reduce((a, q) => a + sumRange(q.counts, data), 0);
+    $('#panel-badges').replaceChildren(el('span', { class: 'sd-badge', 'data-tone': 'accent', text: 'The human' }));
+    $('#panel-graph').replaceChildren(el('img', { class: 'panel-photo', src: p.photo, alt: `${p.name} in a red climbing helmet and sunglasses`, width: 256, height: 256 }));
+    const row = (k, v) => [el('dt', { text: k }), el('dd', { text: v })];
+    $('#panel-stats').replaceChildren(...row(`Commits, last ${data.weeks} weeks`, num(recent)), ...row('Projects in town', String(data.projects.length)));
+    $('#panel-links').replaceChildren(el('a', { class: 'sd-button', 'data-variant': 'primary', href: p.github, target: '_blank', rel: 'noopener' }, 'GitHub', el('span', { class: 'icon icon-external', 'aria-hidden': 'true' })));
+    return openPanel(p);
+  }
   if (p.kind === 'cafe') {
     $('#panel-badges').replaceChildren(el('span', { class: 'sd-badge', 'data-tone': 'accent', text: 'Coffee' }), el('span', { class: 'sd-badge', text: 'Supports rrradio' }));
     $('#panel-graph').replaceChildren();
@@ -58,7 +67,7 @@ function showPanel(st) {
   $('#panel-badges').replaceChildren(...[
     ...(isHq ? [el('span', { class: 'sd-badge', 'data-tone': 'accent', text: 'Headquarters' })] : [statusBadge(p.status)]),
     p.kind && !isHq && !isLab ? el('span', { class: 'sd-badge', text: p.kind }) : null,
-    isLab ? el('span', { class: 'sd-badge', text: `${p.count} projects behind the shutter` }) : null,
+    isLab ? el('span', { class: 'sd-badge', text: `${p.count} projects under construction` }) : null,
   ].filter(Boolean));
   const recent = isHq ? data.projects.reduce((a, q) => a + sumRange(q.counts, data), sumRange(data.lab.counts, data) + sumRange(p.counts, data)) : sumRange(p.counts, data);
   const total = isHq ? data.projects.reduce((a, q) => a + q.total, data.lab.total + p.total) : p.total;
@@ -144,13 +153,6 @@ buildList();
 // Real commits in the window, every repo in the city (projects, the Lab and the HQ).
 $('#commit-total').textContent = num([...data.projects, data.lab, data.hq].reduce((a, p) => a + sumRange(p.counts, data), 0));
 $('#counter-weeks').textContent = $('#counter-weeks-short').textContent = data.weeks;
-const intro = $('#intro');
-const finishIntro = () => {
-  if (intro.classList.contains('is-done')) return;
-  intro.classList.add('is-done');
-  city?.startReveal();
-  setTimeout(() => route(), reducedMotion ? 0 : 1800);
-};
 
 if (webglOK()) {
   const [{ City }, { ensureFonts }] = await Promise.all([import('./scene/city.js'), import('./scene/city/signs.js')]);
@@ -168,12 +170,8 @@ if (webglOK()) {
   setInterval(updateClock, 20000);
 }
 
-if (!city || reducedMotion || location.hash === '#list') {
-  intro.classList.add('is-done');
-  city?.startReveal();
-  route();
-} else {
-  intro.addEventListener('click', finishIntro);
-  addEventListener('keydown', finishIntro, { once: true });
-  setTimeout(finishIntro, 3400);
-}
+// The city rising out of the ground is the intro. A deep link to a station waits for it.
+city?.startReveal();
+const deepLink = city && !reducedMotion && byId[location.hash.slice(1)];
+if (deepLink) setTimeout(route, 1800);
+else route();

@@ -88,10 +88,10 @@
    0,
    0,
    10,
-   24,
+   27,
    0
   ],
-  "total": 139,
+  "total": 142,
   "last": "2026-10-03"
  },
  "projects": [
@@ -285,10 +285,10 @@
     0,
     0,
     8,
-    9,
+    13,
     0
    ],
-   "total": 147,
+   "total": 151,
    "last": "2026-10-03"
   },
   {
@@ -875,6 +875,12 @@
    "last": "2026-05-19"
   }
  ],
+ "human": {
+  "name": "Markus",
+  "blurb": "The one human in Stein&Clankers. Markus decides what gets built, the clankers do most of the typing, and he walks the city to see how it's going. Based in Switzerland, usually with a coffee from the Clanker Café.",
+  "photo": "people/markus.jpg",
+  "github": "https://github.com/MarkusSteinbrecher"
+ },
  "cafe": {
   "name": "Clanker Café",
   "blurb": "The coffee place in the middle of town. If rrradio keeps you company while you work, you can buy it a coffee here: tips go to rrradio through Ko-fi and help keep the stations streaming.",
@@ -882,7 +888,7 @@
  },
  "lab": {
   "name": "The Lab",
-  "blurb": "Prototypes that aren't ready to show yet. The clankers go in and out all day; what comes out stays behind the shutter for now.",
+  "blurb": "Prototypes still under construction. The clankers are building them behind the fence, one steel frame per project, and none of them is public yet.",
   "count": 5,
   "counts": [
    0,

@@ -40,9 +40,9 @@ export class Sky {
     this.drones = Array.from({ length: 3 }, (_, k) => {
       const g = new THREE.Group();
       this.#part(g, new THREE.BoxGeometry(0.7, 0.18, 0.7), 'metal', 0, 0, 0);
-      this.#part(g, new RoundedBoxGeometry(0.42, 0.34, 0.38, 2, 0.08), 'l2', 0, -0.24, 0);
-      this.#part(g, new THREE.BoxGeometry(0.08, 0.1, 0.04), 'l4', -0.09, -0.22, 0.2, true);
-      this.#part(g, new THREE.BoxGeometry(0.08, 0.1, 0.04), 'l4', 0.09, -0.22, 0.2, true);
+      this.#part(g, new RoundedBoxGeometry(0.42, 0.34, 0.38, 2, 0.08), 'botHead', 0, -0.24, 0);
+      this.#part(g, new THREE.BoxGeometry(0.08, 0.1, 0.04), 'botEye', -0.09, -0.22, 0.2, true);
+      this.#part(g, new THREE.BoxGeometry(0.08, 0.1, 0.04), 'botEye', 0.09, -0.22, 0.2, true);
       const rotors = [[-0.45, -0.45], [0.45, -0.45], [-0.45, 0.45], [0.45, 0.45]].map(([x, z]) => this.#part(g, new THREE.BoxGeometry(0.62, 0.03, 0.08), 'trunk', x, 0.14, z));
       scene.add(g);
       const start = rooftops[(k * 7) % rooftops.length] || { x: 0, y: 8, z: 0 };

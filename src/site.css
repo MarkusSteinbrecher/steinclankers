@@ -115,17 +115,8 @@ main { position: relative; }
 .graph i[data-l="3"] { background: var(--sc-level-3); }
 .graph i[data-l="4"] { background: var(--sc-level-4); }
 .graph i[data-l="-"] { background: transparent; }
+.panel-photo { display: block; width: 100%; max-width: 200px; height: auto; aspect-ratio: 1; border-radius: var(--radius-lg); object-fit: cover; }
 .graph-caption { margin-top: var(--space-2); font: var(--font-caption); letter-spacing: var(--tracking-xs); color: var(--fg-muted); }
-
-/* ---------- Intro ---------- */
-.intro {
-  position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; align-content: center; gap: var(--space-6);
-  background: var(--bg-page); cursor: pointer;
-  transition: opacity 700ms var(--ease), visibility 0s linear 700ms;
-}
-.intro-mark { width: min(200px, 40vw); height: auto; }
-.intro-skip { font: var(--font-caption); letter-spacing: var(--tracking-xs); }
-.intro.is-done { opacity: 0; visibility: hidden; pointer-events: none; }
 
 /* ---------- List view ---------- */
 .list-view { position: relative; z-index: 1; min-height: 100dvh; background: var(--bg-page); padding: calc(56px + var(--space-section)) 0 var(--space-section); box-sizing: border-box; }

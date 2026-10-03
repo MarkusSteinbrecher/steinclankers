@@ -451,29 +451,124 @@ function hopper(b) {
   };
 }
 
-// The Lab: a windowless warehouse. The shutter is half down and something glows behind it.
+// The Lab: a construction site. One steel frame per private repo still being built, at
+// different stages, behind a hoarding, with two tower cranes swinging loads around.
 function lab(b) {
-  const { w, d, floors, z0, solid, glow } = b;
-  const h = floors * FH, front = z0 + (d - 0.3) / 2;
-  solid.add(0, LOT, z0, w - 0.3, h, d - 0.3, 'concreteDark');
-  for (let f = 1; f < floors; f++) solid.add(0, LOT + f * FH, z0, w - 0.25, 0.04, d - 0.25, 'concrete');
-  for (let k = 0; k < Math.round(w) - 2; k++) win(b, -(Math.round(w) - 3) / 2 + k, LOT + h - 0.5, front + 0.01, 0.6, 0.2, 0.03, b.lit);
-  const sw = Math.min(4, w - 3), sh = Math.min(2.4, h - 0.6);
-  solid.add(0, LOT, front + 0.02, sw + 0.4, sh + 0.2, 0.06, 'rubber');
-  glow.add(0, LOT, front + 0.06, sw, 0.35, 0.02, 'led');
-  for (let k = 0; k < 9; k++) solid.add(0, LOT + 0.35 + (k * (sh - 0.35)) / 9, front + 0.07, sw, (sh - 0.35) / 9 - 0.03, 0.03, k % 2 ? 'metalDark' : 'metal');
-  for (const s of [-1, 1]) solid.add(s * (sw / 2 + 0.35), LOT, front + 0.08, 0.2, sh, 0.06, 'car2');
-  solid.add(0, LOT + h, z0, w, 0.2, d, 'roof');
-  const roof = LOT + h + 0.2;
-  for (let k = 0; k < 3; k++) solid.add(-w / 2 + 1.2 + k * 1.1, roof, z0 - d / 2 + 0.8, 0.7, 0.6, 0.7, 'metalDark');
-  solid.add(w / 2 - 1, roof, z0 - 0.5, 0.06, 2.6, 0.06, 'metalDark');
-  glow.add(w / 2 - 1, roof + 2.6, z0 - 0.5, 0.16, 0.16, 0.16, 'led');
+  const { w, d, z0, solid, glow, parts } = b;
+  const n = Math.max(1, Math.min(6, b.count || 3));
+  const span = w - 0.6, step = span / n, fw = Math.min(2.2, step - 0.4), fd = d - 1.2;
+  let top = LOT;
+  for (let k = 0; k < n; k++) {
+    const x = -span / 2 + step * (k + 0.5);
+    top = Math.max(top, frame(b, x, z0 - 0.1, fw, fd, 2 + Math.floor(b.rnd() * 6), k));
+  }
+  // Hoarding along the front and the sides, with a gate.
+  const fz = z0 + d / 2 + 0.25, hw = w / 2 + 0.3, fh = 0.9;
+  for (let x = -hw; x < hw - 0.01; x += 1) {
+    if (Math.abs(x + 0.5) < 0.9) continue;
+    solid.add(x + 0.5, LOT, fz, 0.96, fh, 0.06, 'sail');
+    solid.add(x + 0.5, LOT + fh - 0.16, fz + 0.035, 0.96, 0.08, 0.01, 'car2');
+  }
+  for (const sx of [-1, 1]) {
+    for (let z = z0 - d / 2; z < fz - 0.01; z += 1) solid.add(sx * hw, LOT, Math.min(z + 0.5, fz - 0.5), 0.06, fh, Math.min(0.96, fz - z), 'sail');
+    solid.add(sx * 1.1, LOT, fz, 0.1, fh + 0.3, 0.1, 'car2');
+  }
+  // Site clutter: a stack of beams, a container, a cement mixer.
+  for (let k = 0; k < 3; k++) solid.add(-0.4, LOT + k * 0.12, fz - 0.5, 1.6, 0.1, 0.18 + k * 0.02, 'mastRed', 0.05 * k);
+  solid.add(hw - 0.9, LOT, fz - 0.7, 1.2, 0.6, 0.5, 'car1');
+  parts.add(new THREE.CylinderGeometry(0.22, 0.3, 0.6, 12), 'car7', { x: -hw + 0.7, y: LOT + 0.45, z: fz - 0.6, rx: Math.PI / 2.6 });
+  solid.add(-hw + 0.7, LOT, fz - 0.6, 0.5, 0.15, 0.7, 'metalDark');
+  // Tower cranes at the back.
+  const cranes = [crane(b, -w / 4, z0 - d / 2 - 0.35, top + 3.2, 0), crane(b, w / 4 + 0.4, z0 - d / 2 - 0.35, top + 4.6, 1)];
+  b.anim.push((dt, t) => {
+    cranes.forEach((c, i) => {
+      const T = b.still ? 0 : t;
+      c.jib.rotation.y = c.base + Math.sin(T * 0.12 + i * 2.1) * 1.4;
+      const r = 2.4 + (Math.sin(T * 0.2 + i) * 0.5 + 0.5) * 3.6;
+      c.trolley.position.x = r;
+      const drop = 1.2 + (Math.sin(T * 0.33 + i * 1.7) * 0.5 + 0.5) * (c.h - 3);
+      c.cable.scale.y = drop;
+      c.cable.position.set(r, -drop / 2, 0);
+      c.load.position.set(r, -drop - 0.15, 0);
+    });
+  });
   return {
-    roof,
-    top: roof + 3,
-    billboard: { x: 0, y: roof, z: z0 + 0.4, maxW: w - 1 },
-    side: { x: w / 2 - 0.15 + 0.06, y: LOT + (floors - 0.6) * FH, z: z0, maxW: d - 0.5 },
+    roof: LOT + 1.2,
+    top: top + 6,
+    billboard: { x: 2.4, y: LOT + 0.4, z: fz + 0.6, maxW: w / 2 - 0.5 },
+    side: { x: hw + 0.05, y: LOT + 0.5, z: z0, maxW: d - 0.8 },
   };
+}
+
+// A steel frame k floors along: finished floors have slabs and a facade, the top storeys are
+// bare beams, and scaffolding climbs the front. Returns the height of the highest beam.
+function frame(b, x, z, w, d, floors, seed) {
+  const { solid, glow } = b;
+  const done = Math.floor(floors * (0.25 + ((seed * 37) % 10) / 20));
+  for (let f = 0; f < floors; f++) {
+    const y = LOT + f * FH;
+    for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) solid.add(x + sx * (w / 2 - 0.06), y, z + sz * (d / 2 - 0.06), 0.12, FH, 0.12, 'mastRed');
+    solid.add(x, y + FH - 0.08, z + d / 2 - 0.06, w, 0.08, 0.1, 'mastRed');
+    solid.add(x, y + FH - 0.08, z - d / 2 + 0.06, w, 0.08, 0.1, 'mastRed');
+    solid.add(x - w / 2 + 0.06, y + FH - 0.08, z, 0.1, 0.08, d, 'mastRed');
+    solid.add(x + w / 2 - 0.06, y + FH - 0.08, z, 0.1, 0.08, d, 'mastRed');
+    if (f < done) {
+      solid.add(x, y + FH - 0.1, z, w - 0.1, 0.1, d - 0.1, 'concrete');
+      solid.add(x, y, z, w - 0.3, FH - 0.1, d - 0.3, 'glassDark');
+      if (b.rnd() < b.lit) glow.add(x, y + 0.2, z + (d - 0.3) / 2 + 0.01, w - 0.6, 0.4, 0.02, 'windowOn');
+    } else if (f === done) solid.add(x, y + FH - 0.1, z, w - 0.1, 0.1, d - 0.1, 'concreteDark');
+  }
+  // Scaffolding on the front: posts, ledgers and planks.
+  const sz = z + d / 2 + 0.3, sh = Math.min(floors, done + 2) * FH;
+  for (const sx of [-w / 2, 0, w / 2]) solid.add(x + sx, LOT, sz, 0.04, sh, 0.04, 'metal');
+  for (let y = LOT + FH; y <= LOT + sh + 0.01; y += FH) {
+    solid.add(x, y - 0.05, sz, w + 0.1, 0.05, 0.3, 'trunk');
+    solid.add(x, y + 0.4, sz + 0.12, w + 0.1, 0.03, 0.03, 'metal');
+  }
+  return LOT + floors * FH;
+}
+
+// A tower crane: lattice mast, slewing jib with counterweight, trolley, cable and a load.
+function crane(b, x, z, h, i) {
+  const { solid, parts } = b;
+  const segs = Math.round((h - LOT) / 0.8), sh = (h - LOT) / segs;
+  for (let s = 0; s < segs; s++) {
+    const y = LOT + s * sh;
+    for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) solid.add(x + sx * 0.25, y, z + sz * 0.25, 0.06, sh, 0.06, 'car2');
+    solid.add(x, y + sh - 0.04, z - 0.25, 0.5, 0.04, 0.04, 'car2');
+    solid.add(x, y + sh - 0.04, z + 0.25, 0.5, 0.04, 0.04, 'car2');
+    solid.add(x - 0.25, y + sh - 0.04, z, 0.04, 0.04, 0.5, 'car2');
+    solid.add(x + 0.25, y + sh - 0.04, z, 0.04, 0.04, 0.5, 'car2');
+  }
+  solid.add(x, LOT, z, 1.1, 0.25, 1.1, 'concreteDark');
+  const jib = new THREE.Group();
+  jib.position.set(x, h, z);
+  parts.group.add(jib);
+  const put = (geo, key, px, py, pz, glow = false) => {
+    const m = parts.add(geo, key, { x: px, y: py, z: pz, glow });
+    jib.add(m);
+    return m;
+  };
+  const bx = (sx, sy, sz) => new THREE.BoxGeometry(sx, sy, sz);
+  put(bx(0.6, 0.5, 0.6), 'car2', 0, 0.25, 0); // slewing unit
+  put(bx(0.5, 0.45, 0.5), 'concrete', 0.15, 0.75, 0.45); // cab
+  put(bx(0.12, 1.4, 0.12), 'car2', 0, 1.2, 0); // apex
+  put(bx(8, 0.06, 0.06), 'car2', 3.3, 0.85, 0); // jib top chord
+  put(bx(8, 0.06, 0.06), 'car2', 3.3, 0.5, -0.18);
+  put(bx(8, 0.06, 0.06), 'car2', 3.3, 0.5, 0.18);
+  for (let k = 0; k < 10; k++) put(bx(0.04, 0.36, 0.36), 'car2', -0.4 + k * 0.8, 0.67, 0);
+  put(bx(2.6, 0.08, 0.3), 'car2', -1.6, 0.55, 0); // counter-jib
+  put(bx(0.7, 0.6, 0.5), 'concreteDark', -2.5, 0.3, 0); // counterweight
+  put(bx(0.16, 0.16, 0.16), 'beacon', 0, 1.98, 0, true);
+  const trolley = put(bx(0.3, 0.12, 0.3), 'metalDark', 3, 0.42, 0);
+  // Cable and load hang below the jib; the animation moves them with the trolley.
+  const hang = new THREE.Group();
+  hang.position.y = 0.42;
+  jib.add(hang);
+  const cable = new THREE.Mesh(bx(0.02, 1, 0.02), new THREE.MeshBasicMaterial({ color: '#2A2E33' }));
+  const load = put(bx(1.2, 0.12, 0.2), 'mastRed', 3, -1, 0);
+  hang.add(cable, load);
+  return { jib, trolley, cable, load, h: h - LOT, base: i ? Math.PI * 0.8 : Math.PI * 0.2 };
 }
 
 // Fallback for a project without its own architecture yet: a glass office.

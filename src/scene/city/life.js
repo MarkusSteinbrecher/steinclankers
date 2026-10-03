@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { P, X0, X1, W, idx, inside, bfs, corners } from './layout.js';
 import { KeyedGeometry, resolve } from './voxels.js';
+import { CLOTHES } from '../robot.js';
 
 const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
 const NODE_MIN = -4, NODE_MAX = 3;
@@ -119,12 +120,11 @@ export class Crowd {
     this.still = still;
     this.geo = new KeyedGeometry([
       { geo: box(0.5, 0.18, 0.42), key: 'rubber', y: 0.09 },
-      { geo: box(0.4, 0.32, 0.34), key: 'metal', y: 0.34 },
-      { geo: box(0.58, 0.44, 0.48), key: 'l2', y: 0.72 },
-      { geo: box(0.1, 0.12, 0.04), key: 'l4', x: -0.13, y: 0.75, z: 0.25 },
-      { geo: box(0.1, 0.12, 0.04), key: 'l4', x: 0.13, y: 0.75, z: 0.25 },
-      { geo: box(0.04, 0.2, 0.04), key: 'trunk', y: 1.04 },
-      { geo: box(0.1, 0.1, 0.1), key: 'l4', y: 1.17 },
+      { geo: box(0.58, 0.44, 0.48), key: 'botHead', y: 0.72 },
+      { geo: box(0.1, 0.12, 0.04), key: 'botEye', x: -0.13, y: 0.75, z: 0.25 },
+      { geo: box(0.1, 0.12, 0.04), key: 'botEye', x: 0.13, y: 0.75, z: 0.25 },
+      { geo: box(0.04, 0.2, 0.04), key: 'metalDark', y: 1.04 },
+      { geo: box(0.1, 0.1, 0.1), key: 'botBulb', y: 1.17 },
     ]);
     this.geo.recolor(pal);
     this.mesh = new THREE.InstancedMesh(this.geo.geometry, new THREE.MeshStandardMaterial({ roughness: 0.7, vertexColors: true }), count);
@@ -132,6 +132,16 @@ export class Crowd {
     this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.mesh.userData.crowd = this;
     scene.add(this.mesh);
+    // Clothes: a separate instanced body so each clanker gets its own colour.
+    const shirt = box(0.42, 0.32, 0.36);
+    shirt.translate(0, 0.34, 0);
+    this.clothes = new THREE.InstancedMesh(shirt, new THREE.MeshStandardMaterial({ roughness: 0.85 }), count);
+    this.clothes.castShadow = true;
+    this.clothes.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.clothes.userData.crowd = this;
+    const c = new THREE.Color();
+    for (let k = 0; k < count; k++) this.clothes.setColorAt(k, c.set(CLOTHES[(k * 5 + 2) % CLOTHES.length]));
+    scene.add(this.clothes);
 
     const cells = [];
     for (let i = 0; i < walk.length; i++) if (walk[i]) cells.push(i);
@@ -212,8 +222,10 @@ export class Crowd {
       this.#p.set(p.x, 0.2 + bob + hop, p.z);
       this.#m.compose(this.#p, this.#q, this.#s);
       this.mesh.setMatrixAt(i, this.#m);
+      this.clothes.setMatrixAt(i, this.#m);
     });
     this.mesh.instanceMatrix.needsUpdate = true;
+    this.clothes.instanceMatrix.needsUpdate = true;
   }
 
   position(i) { return this.people[i]; }

@@ -30,3 +30,10 @@
 - Checked in the browser: dusk at 19:01 (sun -0.9°, matches sunset), simulated noon, toggle fade both ways, back to live. Not committed yet.
 - The bottom-right counter now shows real commits across all repos in the last 12 weeks (same number as the HQ panel) instead of counting robot deliveries; phones show a short label.
 - Open: the sun and moon are floating discs in an isometric view (there is no sky in frame); see whether that reads well or should become a HUD sun dial.
+
+## 2026-10-03 (night): human, construction site, no intro (ADR 0006)
+- Removed the logo intro; the city's rise is the opening.
+- Markus walks the city (`src/scene/human.js`), modelled on his GitHub photo; click for a panel with the photo (`public/people/markus.jpg`) and a GitHub link.
+- The Lab is a construction site: 5 steel frames (one per private repo), scaffolding, hoarding and two animated tower cranes.
+- Clankers are grey now (robots, crowd, drones) and wear coloured shirts; green is left for commits and the logo.
+- Checked in the browser. Not committed yet.
