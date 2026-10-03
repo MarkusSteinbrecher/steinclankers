@@ -37,3 +37,4 @@
 - The Lab is a construction site: 5 steel frames (one per private repo), scaffolding, hoarding and two animated tower cranes.
 - Clankers are grey now (robots, crowd, drones) and wear coloured shirts; green is left for commits and the logo.
 - Checked in the browser. Not committed yet.
+- Markus is now a LEGO-style minifigure: yellow cylinder head with printed sunglasses and a grin, tapered black jacket torso with a zip, hip piece, blocky jeans legs, splayed arms with C-shaped hands, round red helmet with headlamp (the square brim is gone). Not committed yet.

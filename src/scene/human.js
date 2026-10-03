@@ -2,11 +2,45 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { bfs, corners } from './city/layout.js';
 
-// The one human in the city, after the GitHub photo: red climbing helmet with a headlamp,
+// The one human in the city, as a LEGO-style minifigure after the GitHub photo: red climbing helmet with a headlamp,
 // pale sunglasses, dark jacket. Walks from building to building, stops at each one for a
 // look, and gets a coffee now and then. Colours are scene values, like the logo signs.
-const C = { skin: '#E2B596', helmet: '#E5322B', lamp: '#2A2E33', glass: '#D9DCD6', lens: '#5B6168', jacket: '#2A2E33', jeans: '#3B4A63', shoe: '#1F2328', strap: '#1F2328' };
+const C = { skin: '#F2CD37', helmet: '#E5322B', lamp: '#2A2E33', glass: '#D9DCD6', lens: '#5B6168', jacket: '#2A2E33', jeans: '#3B4A63', shoe: '#1F2328', strap: '#1F2328' };
 const SPEED = 1.5;
+
+// The printed minifig face: his pale sunglasses and a grin.
+function faceTexture() {
+  const c = document.createElement('canvas');
+  c.width = 320;
+  c.height = 200;
+  const ctx = c.getContext('2d');
+  ctx.lineCap = 'round';
+  for (const x of [112, 208]) {
+    ctx.fillStyle = '#D9DCD6';
+    ctx.beginPath();
+    ctx.roundRect(x - 40, 84, 80, 46, 16);
+    ctx.fill();
+    ctx.fillStyle = '#4A5058';
+    ctx.beginPath();
+    ctx.roundRect(x - 31, 92, 62, 30, 11);
+    ctx.fill();
+  }
+  ctx.strokeStyle = '#D9DCD6';
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.moveTo(150, 98);
+  ctx.lineTo(170, 98);
+  ctx.stroke();
+  ctx.strokeStyle = '#1F2328';
+  ctx.lineWidth = 7;
+  ctx.beginPath();
+  ctx.arc(160, 132, 32, 0.2 * Math.PI, 0.8 * Math.PI);
+  ctx.stroke();
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
+  return tex;
+}
 
 export class Human {
   // stops: [{ door: [x, z], approach: [{ x, z }, ...], face }]; walk: the sidewalk grid.
@@ -33,33 +67,46 @@ export class Human {
       parent.add(mesh);
       return mesh;
     };
-    const box = (w, h, d, r = 0.04) => new RoundedBoxGeometry(w, h, d, 2, r);
-    // Legs and arms hang from pivots so they can swing.
-    const limb = (x, y, parts) => {
+    const box = (w, h, d, r = 0.02) => new RoundedBoxGeometry(w, h, d, 2, r);
+    // A LEGO-style minifigure: blocky legs on a hip piece, a tapered torso, splayed arms with
+    // C-shaped hands, a cylinder head with a printed face, and the helmet on top.
+    const limb = (x, y, parts, splay = 0) => {
       const p = new THREE.Group();
       p.position.set(x, y, 0);
       g.add(p);
-      parts.forEach(([geo, m, py]) => add(geo, m, 0, py, 0, p));
+      const inner = new THREE.Group();
+      inner.rotation.z = splay;
+      p.add(inner);
+      parts.forEach(([geo, m, py, pz = 0]) => add(geo, m, 0, py, pz, inner));
       return p;
     };
-    this.legs = [-0.12, 0.12].map((x) => limb(x, 0.72, [[box(0.18, 0.62, 0.2), mat.jeans, -0.31], [box(0.2, 0.12, 0.3), mat.shoe, -0.66]]));
-    add(box(0.5, 0.66, 0.3, 0.08), mat.jacket, 0, 1.04, 0);
-    this.arms = [-0.32, 0.32].map((x) => limb(x, 1.32, [[box(0.14, 0.58, 0.16), mat.jacket, -0.27], [box(0.12, 0.12, 0.12), mat.skin, -0.6]]));
-    add(box(0.12, 0.1, 0.12), mat.skin, 0, 1.42, 0);
+    this.legs = [-0.105, 0.105].map((x) => limb(x, 0.66, [[box(0.2, 0.52, 0.26), mat.jeans, -0.28], [box(0.2, 0.1, 0.32), mat.jeans, -0.56, 0.03]]));
+    add(box(0.44, 0.12, 0.26), mat.jeans, 0, 0.72, 0);
+    const torso = new THREE.BoxGeometry(0.44, 0.6, 0.24);
+    const pos = torso.attributes.position;
+    for (let i = 0; i < pos.count; i++) if (pos.getY(i) > 0) pos.setX(i, pos.getX(i) * (0.32 / 0.44));
+    torso.computeVertexNormals();
+    add(torso, mat.jacket, 0, 1.08, 0);
+    add(new THREE.BoxGeometry(0.016, 0.56, 0.01), mat.glass, 0, 1.08, 0.125);
+    add(box(0.2, 0.05, 0.05, 0.015), mat.jacket, 0, 1.39, 0.06);
+    const claw = new THREE.TorusGeometry(0.055, 0.026, 8, 16, Math.PI * 1.5);
+    claw.rotateX(Math.PI / 2);
+    claw.rotateY(-0.75 * Math.PI);
+    this.arms = [-1, 1].map((sx) => limb(sx * 0.19, 1.32, [[box(0.12, 0.42, 0.14, 0.04), mat.jacket, -0.19], [new THREE.CylinderGeometry(0.035, 0.035, 0.06, 10), mat.skin, -0.42], [claw, mat.skin, -0.47, 0.02]], sx * 0.14));
+    add(new THREE.CylinderGeometry(0.07, 0.07, 0.05, 16), mat.skin, 0, 1.405, 0);
     const head = (this.head = new THREE.Group());
-    head.position.set(0, 1.62, 0);
+    head.position.set(0, 1.58, 0);
     g.add(head);
-    add(box(0.36, 0.38, 0.36, 0.1), mat.skin, 0, 0, 0, head);
-    add(new THREE.SphereGeometry(0.25, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat.helmet, 0, 0.08, -0.01, head);
-    add(box(0.52, 0.04, 0.52, 0.02), mat.helmet, 0, 0.08, -0.01, head);
-    add(box(0.12, 0.08, 0.06, 0.02), mat.lamp, 0, 0.2, 0.22, head);
-    add(box(0.38, 0.03, 0.05, 0.01), mat.strap, 0, 0.11, 0.2, head);
-    add(box(0.14, 0.09, 0.03, 0.02), mat.glass, -0.09, 0.02, 0.185, head);
-    add(box(0.14, 0.09, 0.03, 0.02), mat.glass, 0.09, 0.02, 0.185, head);
-    add(box(0.1, 0.06, 0.02, 0.015), mat.lens, -0.09, 0.02, 0.2, head);
-    add(box(0.1, 0.06, 0.02, 0.015), mat.lens, 0.09, 0.02, 0.2, head);
-    add(box(0.03, 0.2, 0.03, 0.01), mat.strap, -0.17, -0.08, 0.05, head);
-    add(box(0.03, 0.2, 0.03, 0.01), mat.strap, 0.17, -0.08, 0.05, head);
+    add(new THREE.CylinderGeometry(0.17, 0.17, 0.3, 32), mat.skin, 0, 0, 0, head);
+    const face = new THREE.Mesh(new THREE.CylinderGeometry(0.1705, 0.1705, 0.3, 32, 1, true, -0.45 * Math.PI, 0.9 * Math.PI), new THREE.MeshStandardMaterial({ map: faceTexture(), transparent: true, roughness: 0.6 }));
+    head.add(face);
+    // Climbing helmet: a round shell with a thin rim and a headlamp; straps down the sides.
+    add(new THREE.SphereGeometry(0.215, 28, 12, 0, Math.PI * 2, 0, Math.PI / 2), mat.helmet, 0, 0.08, -0.01, head).scale.set(1, 0.9, 1.04);
+    add(new THREE.CylinderGeometry(0.22, 0.22, 0.04, 28), mat.helmet, 0, 0.08, -0.01, head).scale.set(1, 1, 1.04);
+    add(box(0.1, 0.07, 0.05, 0.015), mat.lamp, 0, 0.19, 0.19, head);
+    add(box(0.24, 0.025, 0.025, 0.01), mat.strap, 0, 0.14, 0.205, head);
+    add(box(0.025, 0.16, 0.025, 0.01), mat.strap, -0.172, -0.01, 0.03, head);
+    add(box(0.025, 0.16, 0.025, 0.01), mat.strap, 0.172, -0.01, 0.03, head);
     g.traverse((o) => { o.userData.human = this; });
 
     const first = stops[0];
