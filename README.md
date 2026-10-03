@@ -2,6 +2,8 @@
 
 # steinclankers
 
+Live: https://markussteinbrecher.github.io/steinclankers/
+
 Home page of Stein&Clankers, the umbrella over all our projects. It is Clanker City, a small isometric 3D city ringed by grass, mountains and a lake. Every project is a glass office with its logo on the roof and its real 12-week commit graph as contribution-graph cells in the plaza in front; the HQ carries the Stein&Clankers wordmark in 3D letters. Robots carry commits to the buildings while cars, clankers, birds, a blimp, balloons and drones keep the city busy. Paused projects have grey signs and a sleeping robot. There is also a plain list view at `#list`.
 
 ## Run
@@ -15,7 +17,7 @@ npm run build      # static site in dist/
 ## Update the projects
 
 1. Edit `projects.config.json`. It decides what is public: only listed projects appear, and `lab` repos are summed into one anonymous station.
-2. Run `npm run activity`. It reads commit **dates only** from the local repos under `~/Code` and writes `src/data/projects.json`.
+2. Run `npm run activity`. It reads commit **dates only** from the local repos under `~/Code` and writes `src/data/projects.json`. Private repos that should be counted but never named go in the gitignored `projects.private.json` (`{"repos": {"<station id>": ["<folder>"]}}`).
 3. Commit both files. CI only builds; it cannot see the local repos.
 
 ## Pieces
