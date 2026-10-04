@@ -62,24 +62,6 @@
       "repos": ["rrrecipe"]
     },
     {
-      "id": "steinerdesign",
-      "name": "SteinerDesign",
-      "status": "active",
-      "kind": "Design system",
-      "glyph": "grid",
-      "blurb": "The design system under all of this: near-white and graphite neutrals, one signal red for what you can act on, structure drawn with 1px lines on a 4px grid.",
-      "repos": ["design-system"]
-    },
-    {
-      "id": "claude-mods",
-      "name": "claude-mods",
-      "status": "active",
-      "kind": "Claude Code plugins",
-      "glyph": "plug",
-      "blurb": "Mods that run inside Claude Code: live panes, status lines and hooks that make the clankers nicer to work with.",
-      "repos": ["claude-mods"]
-    },
-    {
       "id": "squash",
       "name": "squash",
       "status": "paused",

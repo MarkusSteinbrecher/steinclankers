@@ -136,18 +136,46 @@ export function furnish(ground, solid, glow, trees, stationBlocks = STATION_BLOC
     for (let k = 0; k < 6; k++) trees.add(cx - 6.5 + k * 2.5 + R(), cz - 0.6 + (R() - 0.5), LOT, 0.8 + R() * 0.4);
   }
 
+  // Parks come in three kinds so the city doesn't repeat itself: a pond with a fountain,
+  // a playground, and a lawn with a pavilion. Only the pond has a fountain.
+  let parkCount = 0;
   function park(cx, cz) {
     ground.setSurface(cx / P, cz / P, 'grass');
-    solid.add(cx - 0.5, LOT, cz - 0.5, 13.9, 0.02, 1.6, 'paving');
-    solid.add(cx - 0.5, LOT, cz - 0.5, 1.6, 0.02, 13.9, 'paving');
-    solid.add(cx - 0.5, LOT, cz - 0.5, 4.6, 0.12, 4.6, 'shore');
-    solid.add(cx - 0.5, LOT, cz - 0.5, 4.0, 0.14, 4.0, 'water');
-    solid.add(cx - 0.5, LOT, cz - 0.5, 0.6, 0.9, 0.6, 'concrete');
-    out.fountains.push({ x: cx - 0.5, y: LOT + 1.0, z: cz - 0.5 });
+    const kind = parkCount++ % 3;
+    const x = cx - 0.5, z = cz - 0.5;
+    if (kind === 0) {
+      solid.add(x, LOT, z, 13.9, 0.02, 1.6, 'paving');
+      solid.add(x, LOT, z, 1.6, 0.02, 13.9, 'paving');
+      solid.add(x, LOT, z, 4.6, 0.12, 4.6, 'shore');
+      solid.add(x, LOT, z, 4.0, 0.14, 4.0, 'water');
+      solid.add(x, LOT, z, 0.6, 0.9, 0.6, 'concrete');
+      out.fountains.push({ x, y: LOT + 1.0, z });
+      for (const [bx, bz, r] of [[-3.2, -1.7, 0], [2.2, -1.7, 0], [-3.2, 0.7, Math.PI], [2.2, 0.7, Math.PI]]) solid.add(cx + bx, LOT, cz + bz, 1.2, 0.3, 0.4, 'trunk', r);
+    } else if (kind === 1) {
+      // Playground: sand pit, swings, a slide and a climbing frame.
+      solid.add(x + 2, LOT, z - 1, 6, 0.04, 5, 'shore');
+      for (const sx of [-0.9, 0.9]) solid.add(x + 0.4 + sx, LOT, z - 2.4, 0.1, 1.4, 0.1, 'car1');
+      solid.add(x + 0.4, LOT + 1.4, z - 2.4, 1.9, 0.1, 0.1, 'car1');
+      for (const sx of [-0.4, 0.4]) solid.add(x + 0.4 + sx, LOT + 0.4, z - 2.4, 0.4, 0.06, 0.25, 'car0');
+      solid.add(x + 3.5, LOT, z - 2.2, 0.8, 1.2, 0.8, 'car2');
+      solid.add(x + 3.5, LOT + 0.5, z - 1.1, 0.5, 0.08, 1.6, 'car7', 0);
+      solid.add(x + 2.2, LOT, z + 0.4, 1.4, 1.0, 1.4, 'car6');
+      solid.add(x + 2.2, LOT + 1.0, z + 0.4, 1.0, 0.1, 1.0, 'car0');
+      solid.add(x - 3, LOT, z + 3, 6, 0.02, 1.4, 'paving');
+      for (const [bx, bz] of [[-4, 2.2], [-1.5, 2.2]]) solid.add(x + bx, LOT, z + bz, 1.2, 0.3, 0.4, 'trunk');
+    } else {
+      // Lawn with a round-ish pavilion and paths.
+      solid.add(x, LOT, z, 13.9, 0.02, 1.2, 'paving');
+      solid.add(x - 2, LOT, z, 4, 0.12, 4, 'paving');
+      for (const [px, pz] of [[-1.5, -1.5], [1.5, -1.5], [-1.5, 1.5], [1.5, 1.5]]) solid.add(x - 2 + px, LOT + 0.12, z + pz, 0.2, 1.5, 0.2, 'concrete');
+      solid.add(x - 2, LOT + 1.62, z, 3.8, 0.16, 3.8, 'roofSlate');
+      solid.add(x - 2, LOT + 1.78, z, 2.6, 0.2, 2.6, 'roofSlate');
+      solid.add(x - 2, LOT + 1.98, z, 1.2, 0.2, 1.2, 'roofSlate');
+    }
     for (const [qx, qz] of [[-4.3, -4.3], [3.3, -4.3], [-4.3, 3.3], [3.3, 3.3]]) {
+      if (kind === 1 && qx > 0 && qz < 0) continue; // keep the playground open
       for (let k = 0; k < 4; k++) trees.add(cx + qx + (R() - 0.5) * 4, cz + qz + (R() - 0.5) * 4, LOT, 0.9 + R() * 0.6);
     }
-    for (const [bx, bz, r] of [[-3.2, -1.7, 0], [2.2, -1.7, 0], [-3.2, 0.7, Math.PI], [2.2, 0.7, Math.PI]]) solid.add(cx + bx, LOT, cz + bz, 1.2, 0.3, 0.4, 'trunk', r);
   }
 
   function stadium(cx, cz) {
@@ -206,14 +234,32 @@ export function furnish(ground, solid, glow, trees, stationBlocks = STATION_BLOC
     glow.add(x, 2.2, z, 0.3, 0.16, 0.3, 'lamp');
   }
 
+  // Fill the remaining blocks, inner rings first. Downtown near the centre, houses further
+  // out, at most MAX_PARKS parks and never two parks side by side (diagonals included).
   const TYPES = { downtown, houses, park, stadium, works, parking };
-  for (let bz = BMIN; bz <= BMAX; bz++) {
-    for (let bx = BMIN; bx <= BMAX; bx++) {
-      const key = `${bx},${bz}`;
-      if (taken.has(key)) continue;
-      const type = SPECIAL_BLOCKS[key] || pick(Math.max(Math.abs(bx), Math.abs(bz)) <= 2 ? ['downtown', 'downtown', 'houses', 'park'] : ['houses', 'houses', 'houses', 'downtown', 'park', 'park']);
-      TYPES[type](bx * P, bz * P);
-    }
+  const MAX_PARKS = 6;
+  const types = new Map(Object.entries(SPECIAL_BLOCKS));
+  const ring = ([x, z]) => Math.max(Math.abs(x), Math.abs(z));
+  const free = [];
+  for (let bz = BMIN; bz <= BMAX; bz++) for (let bx = BMIN; bx <= BMAX; bx++) {
+    const key = `${bx},${bz}`;
+    if (!taken.has(key) && !types.has(key)) free.push([bx, bz]);
+  }
+  free.sort((a, b) => ring(a) - ring(b));
+  const parkNear = (bx, bz) => {
+    for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if ((dx || dz) && types.get(`${bx + dx},${bz + dz}`) === 'park') return true;
+    return false;
+  };
+  for (const [bx, bz] of free) {
+    let options = ring([bx, bz]) <= 1 ? ['downtown'] : ring([bx, bz]) === 2 ? ['downtown', 'downtown', 'houses', 'park'] : ['houses', 'houses', 'houses', 'downtown', 'park'];
+    const parks = [...types.values()].filter((t) => t === 'park').length;
+    if (parks >= MAX_PARKS || parkNear(bx, bz)) options = options.filter((t) => t !== 'park');
+    types.set(`${bx},${bz}`, pick(options));
+  }
+  for (const [key, type] of types) {
+    if (taken.has(key)) continue;
+    const [bx, bz] = key.split(',').map(Number);
+    TYPES[type](bx * P, bz * P);
   }
 
   return out;

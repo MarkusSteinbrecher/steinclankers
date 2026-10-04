@@ -38,3 +38,19 @@
 - Clankers are grey now (robots, crowd, drones) and wear coloured shirts; green is left for commits and the logo.
 - Checked in the browser. Not committed yet.
 - Markus is now a LEGO-style minifigure: yellow cylinder head with printed sunglasses and a grin, tapered black jacket torso with a zip, hip piece, blocky jeans legs, splayed arms with C-shaped hands, round red helmet with headlamp (the square brim is gone). Not committed yet.
+
+## 2026-10-04: session wrap-up
+- Done in this session (all on 2026-10-03, see the entries above and ADRs 0004–0006): Insight removed; one building per project sized by lifetime commits, real logos for rrradio, meinHERMES and meineSteuer; rrradio as a radio station; Clanker Café with the rrradio Ko-fi link; light follows the sun over Zurich with a slow day/night fade and "Back to live"; the bottom-right counter shows real commits; logo intro removed; Markus as a walking LEGO-style minifigure with a panel; the Lab as a construction site with cranes; grey clankers in coloured shirts.
+- Everything up to the minifigure is committed, pushed and deployed (last deploy 173add0). HQ updated: project page, new `lessons/3d-web-scenes.md`, additions to verification and web-deploy lessons.
+- Open:
+  - Real-phone performance check (the scene keeps growing: per-project buildings, cranes, figure).
+  - Commit data refreshes only when `npm run activity` runs locally and is pushed; a scheduled refresh would need access to the private repos.
+  - The local design-system checkout has 4 commits, so SteinerDesign gets a small building; pull it and rerun `npm run activity` if history is missing.
+  - Sun and moon float as discs in the isometric view; revisit whether a HUD sun dial reads better.
+  - Minifig skin is classic LEGO yellow; switch to a skin tone if preferred.
+  - Custom domain; whether the 3D HQ wordmark may stay (logo rule on shadows).
+
+## 2026-10-04: fewer projects, balanced blocks
+- Removed SteinerDesign and claude-mods from the site (config, noscript text); 6 public projects plus the Lab now. Their building styles stay in `buildings.js` in case they come back.
+- Block filling is balanced (`furnish.js`): inner ring downtown, ring 2 mostly downtown, outer ring mostly houses; at most 6 parks and never two side by side. Parks rotate through three kinds (fountain pond, playground, pavilion lawn), so only every third park has a fountain: 2 fountains in the whole city instead of 15.
+- Checked in the browser. Not committed yet.
